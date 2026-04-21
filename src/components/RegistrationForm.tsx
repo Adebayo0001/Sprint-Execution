@@ -131,12 +131,10 @@ export default function RegistrationForm() {
       setShowModal(true);
     } catch (err: any) {
       console.error("Error saving lead:", err);
-      // Give more specific error if possible
-      if (err.message?.includes('permission-denied')) {
-        setError("Account permission issue. Our team is investigating. Please message us on WhatsApp.");
-      } else {
-        setError("Something went wrong. Please check your network and try again.");
-      }
+      // Display the raw error message for debugging
+      const errorMessage = err.message || "An unknown error occurred";
+      const errorDetails = err.code || "";
+      setError(`Submission failed: ${errorMessage} ${errorDetails}. Please ensure your internet is stable.`);
     } finally {
       setIsLoading(false);
     }
