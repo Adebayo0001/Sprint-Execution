@@ -12,7 +12,8 @@ import { WHATSAPP_GROUP_EXECUTORS, WHATSAPP_GROUP_SUPPORT } from '../constants';
 export default function Success() {
   const [searchParams] = useSearchParams();
   const tier = searchParams.get('tier');
-  const name = searchParams.get('name') || 'Executor';
+  const rawName = searchParams.get('name') || 'Executor';
+  const name = rawName.trim().split(' ')[0];
 
   const isTeamSupport = tier === 'group_plus_support' || tier === 'Support';
 
