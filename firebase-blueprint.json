@@ -1,0 +1,25 @@
+{
+  "entities": {
+    "Lead": {
+      "title": "Sprint Lead",
+      "description": "Details of a person who applied for the sprint challenge.",
+      "type": "object",
+      "properties": {
+        "full_name": { "type": "string", "description": "User's full name" },
+        "email": { "type": "string", "format": "email", "description": "User's email address" },
+        "whatsapp": { "type": "string", "description": "User's WhatsApp number" },
+        "goal": { "type": "string", "description": "The goal they want to accomplish during the sprint" },
+        "support_level": { "type": "string", "enum": ["group_only", "group_plus_support"], "description": "Type of support chosen" },
+        "referral_source": { "type": "string", "description": "How they heard about the sprint" },
+        "created_at": { "type": "string", "format": "date-time", "description": "Timestamp when the lead was created" }
+      },
+      "required": ["full_name", "email", "whatsapp", "goal", "support_level", "created_at"]
+    }
+  },
+  "firestore": {
+    "sprint_leads/{leadId}": {
+      "schema": "Lead",
+      "description": "Submissions from the registration form."
+    }
+  }
+}

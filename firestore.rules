@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    // Sprint Leads Validation
+    function isValidLead(data) {
+      return data.keys().hasAll(['full_name', 'email', 'whatsapp', 'goal', 'support_level', 'created_at'])
+        && data.keys().size() >= 6 && data.keys().size() <= 7 // referral_source is optional
+        && data.full_name is string && data.full_name.size() > 0 && data.full_name.size() <= 200
+        && data.email is string && data.email.size() > 0 && data.email.size() <= 200
+        && data.whatsapp is string && data.whatsapp.size() > 0 && data.whatsapp.size() <= 50
+        && data.goal is string && data.goal.size() > 0 && data.goal.size() <= 2000
+        && data.support_level in ['group_only', 'group_plus_support']
+        && data.created_at == request.time
+        && (!('referral_source' in data) || (data.referral_source is string && data.referral_source.size() <= 500));
+    }
+
+    match /sprint_leads/{leadId} {
+      allow create: if isValidLead(incoming());
+      // No reads or updates allowed from client for security
+      allow read, update, delete: if false;
+    }
+  }
+}

@@ -1,0 +1,32 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+export const PAYSTACK_LINK = "https://paystack.com/pay/sprint-execution";
+export const SELAR_LINK = "https://selar.co/sprint-execution";
+export const WHATSAPP_NUMBER = "2348000000000";
+
+export const BRAND_COLORS = {
+  primary: "#4f66fd",
+  background: "#1e1e1e",
+  backgroundLighter: "#242424",
+  backgroundCard: "#2a2a2a",
+  white: "#ffffff",
+  textMuted: "#cccccc",
+};
+
+// Add your Google Drive File IDs here. 
+// You can get the ID from the share link of each file.
+export const DRIVE_HIGHLIGHTS = [
+  "1lSgGjJ7XEs9TH9pm_rkhfTyB5LiE-PMA",
+  "1774_lYB9EIW3mjj-j-hb5YyIiZeqcAu_",
+  "1tsgWjcfGaiC-SJBYpAbg3-5zepcBSR-Y",
+  "1LUPYlOR1p5CV2uyqeqdVI6FRVv5qXjjv",
+  "1lPoFKzZyZdVttKQqNW7e8lKqwR2TMlyD",
+  "1T_qb4m3zU3aRg24vzN3HrKbDcUQRT344",
+  "1mqWk-2E5HnB2zhNmBeflA8lDAFNSL4uT",
+];
+
+export const getDriveThumbnail = (id: string) => `https://lh3.googleusercontent.com/d/${id}=w800-h800-p`;
+

@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-brand-blue: #4f66fd;
+  --color-brand-dark: #1e1e1e;
+  --color-brand-dark-lighter: #242424;
+  --color-brand-dark-card: #2a2a2a;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-dark text-white font-sans antialiased;
+    line-height: 1.7;
+  }
+}
+
+.subtle-grid {
+  background-image: radial-gradient(rgba(79, 102, 253, 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.glass-nav {
+  @apply sticky top-0 z-40 bg-brand-dark/95 backdrop-blur-md border-b border-white/5;
+}
+
+.btn-primary {
+  @apply bg-brand-blue text-white font-bold py-4 px-8 rounded-full transition-all duration-300 hover:brightness-110 active:scale-95;
+}
+
+.input-field {
+  @apply w-full bg-brand-dark border border-white/10 rounded-lg p-4 text-white focus:outline-none focus:border-brand-blue transition-colors;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
