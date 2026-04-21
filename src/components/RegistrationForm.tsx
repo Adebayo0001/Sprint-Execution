@@ -5,7 +5,8 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Check, Loader2, Send, ExternalLink, X, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Check, Loader2, Send, ExternalLink, X, Users, ArrowRight } from 'lucide-react';
 import { collection, addDoc, serverTimestamp, onSnapshot, doc, runTransaction, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { PAYSTACK_GROUP_LINK, PAYSTACK_TEAM_LINK, SELAR_LINK, WHATSAPP_NUMBER } from '../constants';
@@ -22,6 +23,7 @@ interface FormData {
 }
 
 export default function RegistrationForm() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
     full_name: '',
     email: '',
@@ -82,11 +84,15 @@ export default function RegistrationForm() {
 
       // Atomic batch: Create lead, increment global counter, and add to public feed
       await runTransaction(db, async (transaction) => {
-        // 1. Add the lead
+        // 1. READ FIRST: Get the counter state
+        const counterRef = doc(db, 'global_stats', 'registration_count');
+        const counterSnap = await transaction.get(counterRef);
+
+        // 2. Add the lead (Write)
         const leadRef = doc(collection(db, 'sprint_leads'));
         transaction.set(leadRef, leadData);
 
-        // 2. Add to public feed (Sanitized)
+        // 3. Add to public feed (Sanitized Write)
         const feedRef = doc(collection(db, 'public_feed'));
         transaction.set(feedRef, {
           name: formData.full_name.split(' ')[0], // Just first name for privacy
@@ -96,10 +102,7 @@ export default function RegistrationForm() {
           created_at: serverTimestamp()
         });
 
-        // 3. Increment the public counter
-        const counterRef = doc(db, 'global_stats', 'registration_count');
-        const counterSnap = await transaction.get(counterRef);
-
+        // 4. Update the public counter (Write)
         if (!counterSnap.exists()) {
           transaction.set(counterRef, { count: 1 });
         } else {
@@ -542,6 +545,19 @@ export default function RegistrationForm() {
                 
                 <div className="h-px bg-white/10 my-4" />
                 
+                <button
+                  onClick={() => {
+                    const params = new URLSearchParams({
+                      tier: formData.support_level === 'group_plus_support' ? 'Support' : 'Access',
+                      name: formData.full_name.split(' ')[0]
+                    });
+                    navigate(`/success?${params.toString()}`);
+                  }}
+                  className="w-full bg-white/5 hover:bg-white/10 text-white font-medium py-3 px-6 rounded-xl transition-all inline-flex items-center justify-center gap-2 text-xs"
+                >
+                  Skip to Onboarding (Demo/Test) <ArrowRight className="w-3 h-3" />
+                </button>
+
                 <a
                   href={getWhatsAppLink()}
                   target="_blank"

@@ -11,6 +11,9 @@ import { db } from './lib/firebase';
 import RegistrationForm from './components/RegistrationForm';
 import { DRIVE_HIGHLIGHTS, getDriveThumbnail } from './constants';
 
+import { BrowserRouter, Routes, Route, Link as RouterLink } from 'react-router-dom';
+import Success from './pages/Success';
+
 const LiveActivityToast = () => {
   const [activity, setActivity] = useState<any>(null);
   const [visible, setVisible] = useState(false);
@@ -68,7 +71,7 @@ const scrollTo = (id: string) => {
   }
 };
 
-export default function App() {
+function Home() {
   const [showBanner, setShowBanner] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -99,7 +102,7 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-brand-dark overflow-x-hidden">
+    <>
       <LiveActivityToast />
       {/* Sticky Banner */}
       <AnimatePresence>
@@ -576,6 +579,19 @@ export default function App() {
           </div>
         </div>
       </footer>
-    </div>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <div className="min-h-screen bg-brand-dark overflow-x-hidden">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/success" element={<Success />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 }
