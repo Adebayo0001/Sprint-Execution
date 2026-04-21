@@ -8,18 +8,50 @@
         "full_name": { "type": "string", "description": "User's full name" },
         "email": { "type": "string", "format": "email", "description": "User's email address" },
         "whatsapp": { "type": "string", "description": "User's WhatsApp number" },
+        "state": { "type": "string", "description": "User's state/province" },
+        "country": { "type": "string", "description": "User's country" },
         "goal": { "type": "string", "description": "The goal they want to accomplish during the sprint" },
         "support_level": { "type": "string", "enum": ["group_only", "group_plus_support"], "description": "Type of support chosen" },
         "referral_source": { "type": "string", "description": "How they heard about the sprint" },
         "created_at": { "type": "string", "format": "date-time", "description": "Timestamp when the lead was created" }
       },
-      "required": ["full_name", "email", "whatsapp", "goal", "support_level", "created_at"]
+      "required": ["full_name", "email", "whatsapp", "state", "country", "goal", "support_level", "created_at"]
+    },
+    "PublicActivity": {
+      "title": "Public Activity",
+      "description": "Anonymous social proof notifications.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "state": { "type": "string" },
+        "country": { "type": "string" },
+        "tier": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "state", "country", "tier", "created_at"]
+    },
+    "GlobalStats": {
+      "title": "Global Statistics",
+      "description": "Public counters for social proof.",
+      "type": "object",
+      "properties": {
+        "count": { "type": "integer", "description": "Total number of participants" }
+      },
+      "required": ["count"]
     }
   },
   "firestore": {
     "sprint_leads/{leadId}": {
       "schema": "Lead",
       "description": "Submissions from the registration form."
+    },
+    "global_stats/{statId}": {
+      "schema": "GlobalStats",
+      "description": "Live counters for the dashboard."
+    },
+    "public_feed/{feedId}": {
+      "schema": "PublicActivity",
+      "description": "Social proof notifications."
     }
   }
 }

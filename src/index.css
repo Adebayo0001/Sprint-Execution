@@ -21,8 +21,18 @@
   background-size: 40px 40px;
 }
 
+section {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 500px;
+}
+
+#apply, .fixed, nav {
+  content-visibility: visible;
+}
+
 .glass-nav {
-  @apply sticky top-0 z-40 bg-brand-dark/95 backdrop-blur-md border-b border-white/5;
+  @apply sticky top-0 z-40 bg-brand-dark/95 border-b border-white/5;
+  will-change: transform;
 }
 
 .btn-primary {

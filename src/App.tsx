@@ -5,9 +5,60 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Menu, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { X, Menu, ArrowRight, CheckCircle2, Users } from 'lucide-react';
+import { doc, onSnapshot, collection, query, orderBy, limit } from 'firebase/firestore';
+import { db } from './lib/firebase';
 import RegistrationForm from './components/RegistrationForm';
 import { DRIVE_HIGHLIGHTS, getDriveThumbnail } from './constants';
+
+const LiveActivityToast = () => {
+  const [activity, setActivity] = useState<any>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const q = query(collection(db, 'public_feed'), orderBy('created_at', 'desc'), limit(1));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        const data = snapshot.docs[0].data();
+        // Only show if it's new (within last 30 seconds)
+        const timestamp = data.created_at?.toDate()?.getTime();
+        const now = Date.now();
+        if (timestamp && (now - timestamp) < 30000) {
+          setActivity(data);
+          setVisible(true);
+          const timer = setTimeout(() => setVisible(false), 5000);
+          return () => clearTimeout(timer);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  return (
+    <AnimatePresence>
+      {visible && activity && (
+        <motion.div
+          initial={{ opacity: 0, x: -50, scale: 0.9 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          className="fixed bottom-8 left-8 z-[100] bg-brand-dark-lighter border border-brand-blue/30 p-4 rounded-2xl shadow-2xl flex items-center gap-4 max-w-sm pointer-events-none"
+        >
+          <div className="w-10 h-10 bg-brand-blue/10 text-brand-blue rounded-full flex items-center justify-center flex-shrink-0">
+            <Users size={18} />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-white leading-tight">
+              {activity.name} from {activity.state}, {activity.country}
+            </p>
+            <p className="text-[10px] text-brand-blue font-medium mt-1 uppercase tracking-wider">
+              Just registered for {activity.tier}
+            </p>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
 
 // Helper for smooth scroll
 const scrollTo = (id: string) => {
@@ -21,10 +72,27 @@ export default function App() {
   const [showBanner, setShowBanner] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [participantCount, setParticipantCount] = useState<number | null>(null);
 
   useEffect(() => {
+    // Real-time listener for public registration counter
+    const unsubscribe = onSnapshot(doc(db, 'global_stats', 'registration_count'), (doc) => {
+      if (doc.exists()) {
+        setParticipantCount(doc.data().count);
+      } else {
+        setParticipantCount(0);
+      }
+    });
+
+    let ticking = false;
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 50);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -32,6 +100,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-brand-dark overflow-x-hidden">
+      <LiveActivityToast />
       {/* Sticky Banner */}
       <AnimatePresence>
         {showBanner && (
@@ -41,8 +110,16 @@ export default function App() {
             exit={{ height: 0, opacity: 0 }}
             className="fixed top-0 left-0 right-0 z-50 bg-brand-blue text-white py-2 px-6 flex items-center justify-center text-[10px] md:text-xs font-medium tracking-tight"
           >
-            <span className="text-center">
-              Sprint Execution 2026 — 1.0 · 50 Spots Only · Commitment Required · Applications Now Open
+            <span className="text-center flex items-center gap-2">
+              Sprint Execution 2026 — 1.0 · 
+              {participantCount !== null ? (
+                <span className="bg-white/20 px-2 py-0.5 rounded">
+                  {Math.max(0, 50 - participantCount)} Spots Remaining
+                </span>
+              ) : (
+                "50 Spots Only"
+              )} 
+              · Commitment Required · Applications Now Open
             </span>
             <button 
               onClick={() => setShowBanner(false)}
@@ -115,8 +192,22 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <div className="inline-flex items-center gap-2 border border-brand-blue/40 text-brand-blue py-1.5 px-4 rounded-full text-[10px] md:text-xs font-bold tracking-wider uppercase mb-8">
-                50 Persons Only — Cohort 1.0
+            <div className="flex items-center gap-2 mb-8">
+                <div className="inline-flex items-center gap-2 border border-brand-blue/40 text-brand-blue py-1.5 px-4 rounded-full text-[10px] md:text-xs font-bold tracking-wider uppercase">
+                  50 Persons Only — Cohort 1.0
+                </div>
+                {participantCount !== null && (
+                  <motion.div 
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-2 bg-brand-blue/10 border border-brand-blue/20 py-1.5 px-3 rounded-full"
+                  >
+                    <Users size={12} className="text-brand-blue" />
+                    <span className="text-[10px] md:text-xs font-bold text-white/80">
+                      {participantCount} / 50 <span className="text-white/40">Applied</span>
+                    </span>
+                  </motion.div>
+                )}
               </div>
               
               <h1 className="text-5xl md:text-7xl font-bold leading-[1.1] mb-8 tracking-tighter">
@@ -179,7 +270,7 @@ export default function App() {
             Why We Built This
           </span>
           <h2 className="text-3xl md:text-5xl font-bold mb-12 leading-tight tracking-tight">
-            We built this because we want to help people finally get things done.
+            We started this because we saw that getting something done alone feels overwhelming.
           </h2>
           
           <div className="space-y-8 text-lg text-white/70 leading-relaxed max-w-3xl">
@@ -402,10 +493,11 @@ export default function App() {
             >
               <div className="w-32 h-32 md:w-48 md:h-48 rounded-2xl overflow-hidden mb-8 border-2 border-brand-blue/30 shadow-2xl skew-x-1">
                 <img 
-                  src={getDriveThumbnail("1HT8Ytjq4T4rpPShYJJk_JKotQJwiyRUk")} 
+                  src={getDriveThumbnail("15qQlcwu7kLbFMr3-_tLy_JtLbCK9rmAE")} 
                   alt="Adebayo Kareem" 
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover object-top scale-[170%]"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
                 />
               </div>
               <h3 className="text-2xl font-bold mb-1">Adebayo Kareem</h3>
@@ -447,6 +539,7 @@ export default function App() {
                   alt={`Cohort Highlight ${i + 1}`}
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+                  loading="lazy"
                 />
               </motion.div>
             ))}

@@ -5,8 +5,8 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Check, Loader2, Send, ExternalLink } from 'lucide-react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { Check, Loader2, Send, ExternalLink, X, Users } from 'lucide-react';
+import { collection, addDoc, serverTimestamp, onSnapshot, doc, runTransaction, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { PAYSTACK_LINK, SELAR_LINK, WHATSAPP_NUMBER } from '../constants';
 
@@ -14,6 +14,8 @@ interface FormData {
   full_name: string;
   email: string;
   whatsapp: string;
+  state: string;
+  country: string;
   goal: string;
   support_level: 'group_only' | 'group_plus_support';
   referral_source: string;
@@ -24,6 +26,8 @@ export default function RegistrationForm() {
     full_name: '',
     email: '',
     whatsapp: '',
+    state: '',
+    country: '',
     goal: '',
     support_level: 'group_only',
     referral_source: '',
@@ -33,7 +37,21 @@ export default function RegistrationForm() {
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showUpsellModal, setShowUpsellModal] = useState(false);
+  const [showClarityPopup, setShowClarityPopup] = useState(false);
+  const [hasSeenClarity, setHasSeenClarity] = useState(false);
   const [submittedData, setSubmittedData] = useState<FormData | null>(null);
+  const [participantCount, setParticipantCount] = useState<number | null>(null);
+
+  React.useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, 'global_stats', 'registration_count'), (doc) => {
+      if (doc.exists()) {
+        setParticipantCount(doc.data().count);
+      } else {
+        setParticipantCount(0);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -57,15 +75,40 @@ export default function RegistrationForm() {
         return;
       }
 
-      const docRef = await addDoc(collection(db, 'sprint_leads'), {
+      const leadData = {
         ...formData,
         created_at: serverTimestamp(),
+      };
+
+      // Atomic batch: Create lead, increment global counter, and add to public feed
+      await runTransaction(db, async (transaction) => {
+        // 1. Add the lead
+        const leadRef = doc(collection(db, 'sprint_leads'));
+        transaction.set(leadRef, leadData);
+
+        // 2. Add to public feed (Sanitized)
+        const feedRef = doc(collection(db, 'public_feed'));
+        transaction.set(feedRef, {
+          name: formData.full_name.split(' ')[0], // Just first name for privacy
+          state: formData.state,
+          country: formData.country,
+          tier: formData.support_level === 'group_plus_support' ? 'Group + Team Support' : 'Sprint Group Access',
+          created_at: serverTimestamp()
+        });
+
+        // 3. Increment the public counter
+        const counterRef = doc(db, 'global_stats', 'registration_count');
+        const counterSnap = await transaction.get(counterRef);
+
+        if (!counterSnap.exists()) {
+          transaction.set(counterRef, { count: 1 });
+        } else {
+          transaction.update(counterRef, { count: increment(1) });
+        }
       });
 
-      if (docRef.id) {
-        setSubmittedData(formData);
-        setShowModal(true);
-      }
+      setSubmittedData(formData);
+      setShowModal(true);
     } catch (err) {
       console.error("Error saving lead:", err);
       setError("Something went wrong. Please try again.");
@@ -93,7 +136,15 @@ export default function RegistrationForm() {
         <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">
           Secure your spot before it's gone.
         </h2>
-        <p className="text-white/60">50 spots. First come, first committed.</p>
+        <div className="flex flex-col items-center gap-2">
+          {participantCount !== null && (
+            <div className="flex items-center gap-2 text-brand-blue font-bold text-sm mb-2">
+              <Users size={16} />
+              <span>{participantCount} / 50 Applicants already in queue</span>
+            </div>
+          )}
+          <p className="text-white/60">50 spots only. Limited capacity remaining.</p>
+        </div>
       </div>
 
       <motion.div 
@@ -142,6 +193,33 @@ export default function RegistrationForm() {
             />
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-white/60">State / Province</label>
+              <input
+                required
+                type="text"
+                name="state"
+                placeholder="e.g. Lagos"
+                className="input-field"
+                value={formData.state}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-white/60">Country</label>
+              <input
+                required
+                type="text"
+                name="country"
+                placeholder="e.g. Nigeria"
+                className="input-field"
+                value={formData.country}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium text-white/60">What do you want to get done in 90 days?</label>
             <textarea
@@ -152,6 +230,12 @@ export default function RegistrationForm() {
               className="input-field resize-none"
               value={formData.goal}
               onChange={handleChange}
+              onFocus={() => {
+                if (!hasSeenClarity) {
+                  setShowClarityPopup(true);
+                  setHasSeenClarity(true);
+                }
+              }}
             />
           </div>
 
@@ -270,6 +354,84 @@ export default function RegistrationForm() {
 
       {/* Modal Backdrop */}
       <AnimatePresence>
+        {showClarityPopup && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center px-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/90 backdrop-blur-md"
+              onClick={() => setShowClarityPopup(false)}
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="relative z-10 w-full max-w-lg bg-brand-dark-card border border-brand-blue/30 rounded-3xl p-8 md:p-10 shadow-3xl text-left"
+            >
+              <button 
+                onClick={() => setShowClarityPopup(false)}
+                className="absolute top-6 right-6 text-white/20 hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+              <div className="flex items-center gap-2 mb-6">
+                <div className="w-8 h-8 rounded-lg bg-brand-blue/10 flex items-center justify-center">
+                  <Check className="w-4 h-4 text-brand-blue" />
+                </div>
+                <span className="text-brand-blue text-[10px] font-bold tracking-[0.3em] uppercase">Clarity is King</span>
+              </div>
+              
+              <h3 className="text-2xl font-bold mb-4">A Quick Note on Your Goal</h3>
+              
+              <div className="space-y-4 text-white/70 text-sm leading-relaxed mb-8">
+                <p>
+                  Execution thrives on specificity. Instead of just "learning," think about what you want to <span className="text-white font-semibold">ship</span> or <span className="text-white font-semibold text-brand-blue underline decoration-brand-blue/30 underline-offset-4">become</span> by the end of these 90 days.
+                </p>
+                <p>
+                  But here's a secret: <span className="text-white">Most people aren't 100% clear when they start, and that’s perfectly fine.</span>
+                </p>
+                <p>
+                  Secure your spot with your current idea before we hit our 50-person limit. If you wait for the perfect wording, your spot might be gone by the time you're back.
+                </p>
+                <div className="bg-brand-blue/5 border border-brand-blue/10 p-5 rounded-xl space-y-3">
+                  <p className="font-bold text-white flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-brand-blue rounded-full" />
+                    The Clarity Advantage
+                  </p>
+                  <p className="text-xs leading-relaxed">
+                    Once you're in, you'll unlock Adebayo’s custom <span className="text-brand-blue font-bold">AI Roadmap Prompt</span>—a tool specifically designed to sit with you and distill your confusion into a sharp, actionable roadmap.
+                  </p>
+                  <p className="text-[10px] text-white/30 italic">
+                    Note: Helping you find this deep clarity is a core reason many choose to <span className="text-white/60 hover:text-brand-blue cursor-pointer transition-colors" onClick={() => { setShowClarityPopup(false); handleSupportSelect('group_plus_support'); }}>upgrade to Team Support</span>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => setShowClarityPopup(false)}
+                  className="btn-primary w-full py-4 text-center"
+                >
+                  Got it, I'll define my goal
+                </button>
+                <div className="flex justify-center">
+                  <button 
+                    onClick={() => {
+                      setShowClarityPopup(false);
+                      // In a real app, this would open the video modal or scroll to a video section
+                      window.open('https://adebayokareem.vercel.app/', '_blank'); 
+                    }}
+                    className="text-[10px] text-white/40 hover:text-brand-blue transition-colors flex items-center gap-1.5"
+                  >
+                    Watch the "Clarity for Sprint" video <ExternalLink size={10} />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
         {showUpsellModal && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center px-6">
             <motion.div
@@ -284,6 +446,12 @@ export default function RegistrationForm() {
               exit={{ scale: 0.95, opacity: 0 }}
               className="relative z-10 w-full max-w-xl bg-brand-dark-card border border-brand-blue/30 rounded-3xl p-8 md:p-12 shadow-3xl overflow-hidden"
             >
+              <button 
+                onClick={() => setShowUpsellModal(false)}
+                className="absolute top-6 right-6 z-20 text-white/20 hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
               <div className="absolute top-0 right-0 w-32 h-32 bg-brand-blue/10 blur-3xl rounded-full -mr-16 -mt-16" />
               
               <div className="relative">
@@ -291,13 +459,13 @@ export default function RegistrationForm() {
                 <h3 className="text-2xl md:text-3xl font-bold mb-6 leading-tight">Wait, John. Before you proceed...</h3>
                 <div className="space-y-4 text-white/70 text-sm md:text-base leading-relaxed mb-10">
                   <p>
-                    We’ve noticed that people on the <span className="text-white font-bold">Group + Team Support</span> tier often hit their goals 3x faster.
+                    We’ve seen that those who choose the <span className="text-white font-bold">Group + Team Support</span> pathway tend to find their rhythm and hit their goals about 3x faster.
                   </p>
                   <p>
-                    While the group energy is incredible, the standard tier doesn’t include the <span className="text-white font-bold">Personalized Roadmap</span>, the <span className="text-white font-bold">Dedicated 1-on-1 Meeting</span>, or the <span className="text-white font-bold">AI Build Tutorials</span> that show you how to build professional-grade systems from scratch.
+                    The standard group energy is life-changing, but it doesn't give you the <span className="text-white font-bold">Personalized Roadmap</span>, the <span className="text-white font-bold">1-on-1 Guidance</span>, or the <span className="text-white font-bold">AI Build Tutorials</span> needed to create high-level professional systems.
                   </p>
                   <p>
-                    If your goal is to finish this sprint with a skill that generates real value, the upgrade ensures you aren't just working hard, but working <span className="italic">effectively</span>.
+                    If you feel you might need that extra hands-on support to ensure your hard work translates into a real skill shift, the upgrade ensures you have a Lead Executor walking right beside you.
                   </p>
                 </div>
 
