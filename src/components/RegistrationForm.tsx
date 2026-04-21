@@ -545,19 +545,6 @@ export default function RegistrationForm() {
                 
                 <div className="h-px bg-white/10 my-4" />
                 
-                <button
-                  onClick={() => {
-                    const params = new URLSearchParams({
-                      tier: formData.support_level === 'group_plus_support' ? 'Support' : 'Access',
-                      name: formData.full_name.split(' ')[0]
-                    });
-                    navigate(`/success?${params.toString()}`);
-                  }}
-                  className="w-full bg-white/5 hover:bg-white/10 text-white font-medium py-3 px-6 rounded-xl transition-all inline-flex items-center justify-center gap-2 text-xs"
-                >
-                  Skip to Onboarding (Demo/Test) <ArrowRight className="w-3 h-3" />
-                </button>
-
                 <a
                   href={getWhatsAppLink()}
                   target="_blank"
