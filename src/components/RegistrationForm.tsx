@@ -385,7 +385,7 @@ export default function RegistrationForm() {
                 <span className="text-brand-blue text-[10px] font-bold tracking-[0.3em] uppercase">Clarity is King</span>
               </div>
               
-              <h3 className="text-2xl font-bold mb-4">A Quick Note on Your Goal</h3>
+              <h3 className="text-2xl font-bold mb-4">{formData.full_name.trim().split(' ')[0] || 'Executor'}, a Quick Note on Your Goal</h3>
               
               <div className="space-y-4 text-white/70 text-sm leading-relaxed mb-8">
                 <p>
@@ -459,7 +459,7 @@ export default function RegistrationForm() {
               
               <div className="relative">
                 <span className="text-brand-blue text-[10px] font-bold tracking-[0.3em] uppercase block mb-4">A Quick Thought</span>
-                <h3 className="text-2xl md:text-3xl font-bold mb-6 leading-tight">Wait, John. Before you proceed...</h3>
+                <h3 className="text-2xl md:text-3xl font-bold mb-6 leading-tight">Wait, {formData.full_name.trim().split(' ')[0] || 'Executor'}. Before you proceed...</h3>
                 <div className="space-y-4 text-white/70 text-sm md:text-base leading-relaxed mb-10">
                   <p>
                     We’ve seen that those who choose the <span className="text-white font-bold">Group + Team Support</span> pathway tend to find their rhythm and hit their goals about 3x faster.
