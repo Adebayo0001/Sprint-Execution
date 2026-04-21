@@ -21,12 +21,7 @@ service cloud.firestore {
     // Sprint Leads Validation
     function isValidLead(data) {
       return data.keys().hasAll(['full_name', 'email', 'whatsapp', 'state', 'country', 'goal', 'support_level', 'created_at'])
-        && data.keys().size() >= 8 && data.keys().size() <= 9
         && data.full_name is string && data.full_name.size() > 0
-        && data.state is string && data.state.size() > 0
-        && data.country is string && data.country.size() > 0
-        && data.whatsapp is string && data.whatsapp.size() > 0
-        && data.support_level in ['group_only', 'group_plus_support']
         && data.created_at == request.time;
     }
 
@@ -36,17 +31,8 @@ service cloud.firestore {
     }
 
     match /public_feed/{feedId} {
-      // Public read for real-time notifications
       allow read: if true;
-      // Protected creation logic
-      allow create: if (
-        incoming().keys().hasAll(['name', 'state', 'country', 'tier', 'created_at']) &&
-        incoming().name is string &&
-        incoming().state is string &&
-        incoming().country is string &&
-        incoming().tier is string &&
-        incoming().created_at == request.time
-      );
+      allow create: if incoming().created_at == request.time;
     }
 
     match /global_stats/registration_count {

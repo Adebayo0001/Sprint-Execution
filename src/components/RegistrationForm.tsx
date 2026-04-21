@@ -69,6 +69,8 @@ export default function RegistrationForm() {
     setIsLoading(true);
     setError(null);
 
+    const firstName = formData.full_name.trim().split(' ')[0] || 'Executor';
+
     try {
       // If choosing group_only, show upsell first
       if (formData.support_level === 'group_only' && !showUpsellModal && !showModal) {
@@ -95,7 +97,7 @@ export default function RegistrationForm() {
         // 3. Add to public feed (Sanitized Write)
         const feedRef = doc(collection(db, 'public_feed'));
         transaction.set(feedRef, {
-          name: formData.full_name.split(' ')[0], // Just first name for privacy
+          name: firstName,
           state: formData.state,
           country: formData.country,
           tier: formData.support_level === 'group_plus_support' ? 'Group + Team Support' : 'Sprint Group Access',
@@ -110,11 +112,31 @@ export default function RegistrationForm() {
         }
       });
 
+      // 5. Optional: Sync to Google Sheet if Webhook URL is provided
+      const sheetUrl = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL;
+      if (sheetUrl) {
+        try {
+          await fetch(sheetUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData),
+          });
+        } catch (sheetErr) {
+          console.warn("Google Sheet sync failed (non-critical):", sheetErr);
+        }
+      }
+
       setSubmittedData(formData);
       setShowModal(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error saving lead:", err);
-      setError("Something went wrong. Please try again.");
+      // Give more specific error if possible
+      if (err.message?.includes('permission-denied')) {
+        setError("Account permission issue. Our team is investigating. Please message us on WhatsApp.");
+      } else {
+        setError("Something went wrong. Please check your network and try again.");
+      }
     } finally {
       setIsLoading(false);
     }
