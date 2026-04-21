@@ -540,6 +540,14 @@ export default function RegistrationForm() {
               exit={{ scale: 0.95, opacity: 0 }}
               className="relative z-10 w-full max-w-md bg-brand-dark-card border-t-4 border-brand-blue rounded-3xl p-8 md:p-10 shadow-3xl text-center"
             >
+              <button 
+                onClick={() => setShowModal(false)}
+                className="absolute top-6 right-6 text-white/20 hover:text-white transition-colors"
+                aria-label="Close modal"
+              >
+                <X size={20} />
+              </button>
+
               <h3 className="text-2xl font-bold mb-4">You're in, {formData.full_name.trim().split(' ')[0]} — almost.</h3>
               <p className="text-white/70 mb-8 text-sm leading-relaxed">
                 Your application has been saved. The final step is your commitment fee — this is what locks in your spot and confirms your place in the Sprint.
@@ -578,6 +586,13 @@ export default function RegistrationForm() {
               <p className="mt-8 text-[11px] text-white/40">
                 After payment, you'll receive a WhatsApp message with your group invite link within 24 hours. Your payment is your confirmation.
               </p>
+
+              <button
+                onClick={() => setShowModal(false)}
+                className="mt-6 text-[10px] text-white/30 hover:text-white transition-colors underline underline-offset-4"
+              >
+                Go back to edit my details or change plan
+              </button>
             </motion.div>
           </div>
         )}

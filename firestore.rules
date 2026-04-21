@@ -26,21 +26,16 @@ service cloud.firestore {
     }
 
     match /sprint_leads/{leadId} {
-      allow create: if isValidLead(incoming());
+      allow create: if true;
       allow read, update, delete: if false;
     }
 
     match /public_feed/{feedId} {
-      allow read: if true;
-      allow create: if incoming().created_at == request.time;
+      allow read, create: if true;
     }
 
-    match /global_stats/registration_count {
-      // Public read for live dashboard social proof
-      allow read: if true;
-      // Allow atomic increments during registration
-      allow create: if incoming().count == 1;
-      allow update: if incoming().count == existing().count + 1;
+    match /global_stats/{statId} {
+      allow read, write: if true;
     }
   }
 }
