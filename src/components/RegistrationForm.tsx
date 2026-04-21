@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Check, Loader2, Send, ExternalLink, X, Users } from 'lucide-react';
 import { collection, addDoc, serverTimestamp, onSnapshot, doc, runTransaction, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { PAYSTACK_LINK, SELAR_LINK, WHATSAPP_NUMBER } from '../constants';
+import { PAYSTACK_GROUP_LINK, PAYSTACK_TEAM_LINK, SELAR_LINK, WHATSAPP_NUMBER } from '../constants';
 
 interface FormData {
   full_name: string;
@@ -524,7 +524,7 @@ export default function RegistrationForm() {
 
               <div className="space-y-3">
                 <a
-                  href={PAYSTACK_LINK}
+                  href={formData.support_level === 'group_plus_support' ? PAYSTACK_TEAM_LINK : PAYSTACK_GROUP_LINK}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full btn-primary inline-flex items-center justify-center gap-2"
