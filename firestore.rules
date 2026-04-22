@@ -26,8 +26,8 @@ service cloud.firestore {
     }
 
     match /sprint_leads/{leadId} {
-      allow create: if true;
-      allow read, update, delete: if false;
+      allow create, read: if true;
+      allow update, delete: if false;
     }
 
     match /public_feed/{feedId} {
