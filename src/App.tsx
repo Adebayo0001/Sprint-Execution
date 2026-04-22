@@ -265,7 +265,7 @@ const Navbar = () => {
                 <button
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
-                  className="text-left text-sm text-white/60 hover:text-brand-blue font-medium transition-colors py-2 border-b border-white/5"
+                  className="text-left text-[13px] text-white/60 hover:text-brand-blue font-medium transition-colors py-2 border-b border-white/5"
                 >
                   {item.label}
                 </button>
@@ -273,15 +273,15 @@ const Navbar = () => {
               <Link 
                 to="/compare" 
                 onClick={() => setIsMenuOpen(false)}
-                className="text-sm text-white/60 hover:text-brand-blue font-medium transition-colors py-2 border-b border-white/5"
+                className="text-[13px] text-white/60 hover:text-brand-blue font-medium transition-colors py-2 border-b border-white/5"
               >
                 Quick overview
               </Link>
               <button
                 onClick={() => scrollToSection('apply')}
-                className="w-full bg-brand-blue text-white text-sm font-bold py-4 rounded-xl flex items-center justify-center gap-2"
+                className="w-full bg-brand-blue text-white text-[13px] font-bold py-4 rounded-xl flex items-center justify-center gap-2"
               >
-                Apply Now <ArrowRight size={18} />
+                Apply now <ArrowRight size={18} />
               </button>
             </div>
           </motion.div>
