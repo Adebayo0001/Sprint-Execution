@@ -125,31 +125,46 @@ export default function ExitIntentPopup() {
             {activePopup === 'options' && (
               <div className="flex flex-col">
                 <span className="text-[#4f66fd] uppercase text-[11px] font-bold tracking-[0.2em] mb-4 block">
-                  WAIT — THERE ARE TWO WAYS IN
+                  WAIT — YOU MAY HAVE MISSED THIS
                 </span>
                 <h3 className="text-2xl md:text-[28px] font-bold text-white mb-6 leading-[1.2]">
-                  The Sprint starts<br />from whatever<br />you can commit.
+                  You can join The Sprint<br />for whatever you have<br />right now.
                 </h3>
-                <p className="text-[#cccccc]/80 text-[15px] mb-8 leading-relaxed">
-                  The Builder's Track at ₦12,500 is just one option. The Sprint Group is open to everyone 
-                  — and you pay what you genuinely have. Some people pay ₦1,000. Some pay ₦5,000. 
-                  The commitment matters more than the amount.
-                </p>
+                <div className="text-[#cccccc]/80 text-[15px] mb-8 leading-relaxed space-y-4">
+                  <p>
+                    There is no fixed price to join The Sprint group. Some people pay ₦2,000. Some pay ₦5,000. 
+                    You decide what your commitment looks like — and that is what gets you in.
+                  </p>
+                  <p className="font-bold text-white">
+                    Just a decision to show up for 90 days.
+                  </p>
+                  <p className="text-sm border-t border-white/5 pt-4">
+                    And if you want more — a personal roadmap, direct access to Adebayo, and hands-on guidance 
+                    building real AI-powered skills that can pay you after the Sprint — The Builder's Track 
+                    at ₦12,500 is built exactly for that.
+                  </p>
+                </div>
 
                 <div className="space-y-4">
                   <button
-                    onClick={() => scrollToSection('highlights')}
+                    onClick={() => scrollToSection('apply', true)}
                     className="w-full bg-[#4f66fd] hover:bg-[#3d51d4] text-white font-bold py-4 rounded-full flex items-center justify-center gap-2 transition-all"
                   >
-                    See Both Options <ArrowRight size={18} />
+                    Join The Sprint — Pay What You Have <ArrowRight size={18} />
+                  </button>
+                  <button
+                    onClick={() => scrollToSection('highlights')}
+                    className="w-full bg-transparent border border-white/10 hover:border-white/30 text-white font-bold py-4 rounded-full transition-all text-center"
+                  >
+                    Tell Me More About The Builder's Track <ArrowRight size={18} />
                   </button>
                   <a
                     href="https://wa.me/2348120723575"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full text-[#777777] hover:text-white text-sm font-medium text-center block pt-2 transition-colors"
+                    className="w-full text-[#777777] hover:text-white text-[13px] font-medium text-center block pt-2 transition-colors"
                   >
-                    I still have questions — talk to us
+                    Still have questions? We're one message away.
                   </a>
                 </div>
               </div>
