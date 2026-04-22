@@ -132,16 +132,17 @@ export default function ExitIntentPopup() {
                 </h3>
                 <div className="text-[#cccccc]/80 text-[15px] mb-8 leading-relaxed space-y-4">
                   <p>
-                    There is no fixed price to join The Sprint group. Some people pay ₦2,000. Some pay ₦5,000. 
-                    You decide what your commitment looks like — and that is what gets you in.
+                    There is no fixed price to join The Sprint group. Some people pay ₦1,000. Some pay ₦5,000. 
+                    You decide — and that gets you in.
                   </p>
-                  <p className="font-bold text-white">
-                    Just a decision to show up for 90 days.
+                  <p className="border-t border-white/5 pt-4">
+                    Want more? The Builder's Track at ₦12,500 gives you a personal roadmap, direct access 
+                    to Adebayo, and hands-on guidance building real AI-powered skills that can pay you 
+                    after the Sprint.
                   </p>
-                  <p className="text-sm border-t border-white/5 pt-4">
-                    And if you want more — a personal roadmap, direct access to Adebayo, and hands-on guidance 
-                    building real AI-powered skills that can pay you after the Sprint — The Builder's Track 
-                    at ₦12,500 is built exactly for that.
+                  <p className="text-sm italic">
+                    Can't pay ₦12,500 at once? We may consider instalment payments for people who are 
+                    genuinely committed. Reach out and let's talk.
                   </p>
                 </div>
 
