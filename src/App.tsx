@@ -200,15 +200,15 @@ const Navbar = () => {
       
       <div className="hidden lg:flex items-center gap-8">
         {[
-          { label: 'How It Works', id: 'how-it-works' },
-          { label: 'Who It\'s For', id: 'who-it-is-for' },
+          { label: 'How it works', id: 'how-it-works' },
+          { label: 'Who it\'s for', id: 'who-it-is-for' },
           { label: 'Highlights', id: 'highlights' },
           { label: 'About', id: 'about' }
         ].map((item) => (
           <button
             key={item.id}
             onClick={() => scrollToSection(item.id)}
-            className="text-[13px] uppercase tracking-widest text-white/60 hover:text-brand-blue font-medium transition-colors cursor-pointer"
+            className="text-[12px] text-white/60 hover:text-brand-blue font-medium transition-colors cursor-pointer"
           >
             {item.label}
           </button>
@@ -216,16 +216,16 @@ const Navbar = () => {
 
         <Link 
           to="/compare" 
-          className="text-[13px] uppercase tracking-widest text-white/60 hover:text-brand-blue font-medium transition-colors"
+          className="text-[12px] text-white/60 hover:text-brand-blue font-medium transition-colors"
         >
-          Compare Paths
+          Quick overview
         </Link>
         
         <button
           onClick={() => scrollToSection('apply')}
-          className="bg-brand-blue text-white text-[12px] uppercase tracking-wider font-semibold px-6 py-2.5 rounded-full hover:scale-105 transition-transform"
+          className="bg-brand-blue text-white text-[11px] font-semibold px-6 py-2.5 rounded-full hover:scale-105 transition-transform"
         >
-          Apply Now
+          Apply now
         </button>
       </div>
       
