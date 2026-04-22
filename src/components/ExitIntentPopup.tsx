@@ -194,9 +194,21 @@ export default function ExitIntentPopup() {
                     <h3 className="text-2xl md:text-[26px] font-bold text-white mb-6 leading-[1.2]">
                       Interested in The Builder's Track<br />but the timing isn't right?
                     </h3>
-                    <p className="text-[#cccccc]/80 text-[15px] mb-8 leading-relaxed">
-                      We get it. ₦12,500 is a commitment. If you want in but need a little flexibility, reach out to us directly. We offer instalment payments for serious people — and we'll work something out with you personally.
-                    </p>
+                    <div className="text-[#cccccc]/80 text-[15px] mb-8 leading-relaxed space-y-4">
+                      <p>₦12,500 is a commitment — we understand.</p>
+                      <p>
+                        If you want in but need flexibility, reach out directly. We may consider instalment payments 
+                        for people who are genuinely serious.
+                      </p>
+                      <p>
+                        Not ready for The Builder's Track at all? You can still join The Sprint group and 
+                        pay what you genuinely have — ₦2,000, ₦5,000, ₦10,000. Whatever reflects your 
+                        commitment right now.
+                      </p>
+                      <p className="font-bold text-white italic">
+                        Either way, there is a place for you here.
+                      </p>
+                    </div>
 
                     <div className="space-y-4 mb-10">
                       <a
