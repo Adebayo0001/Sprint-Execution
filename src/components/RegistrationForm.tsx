@@ -107,7 +107,8 @@ export default function RegistrationForm() {
       const sheetUrl = import.meta.env.VITE_SHEETS_WEBHOOK_URL;
       if (sheetUrl) {
         try {
-          await fetch(sheetUrl, {
+          // Non-blocking fire-and-forget sync to Google Sheets
+          fetch(sheetUrl, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
@@ -117,11 +118,11 @@ export default function RegistrationForm() {
               whatsapp: formData.whatsapp,
               goal: formData.goal,
               support_level: formData.support_level === 'group_plus_support' ? "The Builder's Track" : "The Sprint",
-              referred_by: formData.referral_source
+              referred_by: localStorage.getItem('referral_source') || ''
             }),
-          });
+          }).catch(e => console.warn("Fetch error for Sheets:", e));
         } catch (sheetErr) {
-          console.warn("Google Sheet sync failed (non-critical):", sheetErr);
+          console.warn("Google Sheet sync setup failed:", sheetErr);
         }
       }
 

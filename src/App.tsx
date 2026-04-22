@@ -11,6 +11,8 @@ import { db } from './lib/firebase';
 import RegistrationForm from './components/RegistrationForm';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Success from './pages/Success';
+import AdminSync from './pages/AdminSync';
+import AdminSyncButton from './components/AdminSyncButton';
 import { SUPPORT_EMAIL, SAMPLE_WORK_LINK, getDriveThumbnail } from './constants';
 
 const LiveActivityToast = () => {
@@ -977,6 +979,7 @@ function Home() {
           </div>
         </div>
       </footer>
+      <AdminSyncButton />
       </div>
     </main>
   );
@@ -989,6 +992,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/success" element={<Success />} />
+          <Route path="/admin/sync" element={<AdminSync />} />
         </Routes>
       </div>
     </BrowserRouter>
