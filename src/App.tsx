@@ -455,7 +455,7 @@ function Home() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.8 }}
-            className="lg:hidden w-full aspect-video mb-12 relative"
+            className="lg:hidden w-full aspect-square mb-12 relative"
           >
             <img 
               src={getDriveThumbnail("1OB0ZE1Kmb3Q_PSYXKh7YmSDDk0MvodRs")}
