@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * Registration form with payment modal.
+ */
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
@@ -374,8 +377,6 @@ export default function RegistrationForm() {
               <div className="space-y-4">
                 <a 
                   href={formData.support_level === 'group_plus_support' ? PAYSTACK_LINK_BUILDERS : PAYSTACK_LINK_SPRINT} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
                   onClick={() => localStorage.setItem('sprint_applicant', JSON.stringify(formData))}
                   className="w-full btn-editorial-pill py-4 block"
                 >
@@ -383,8 +384,6 @@ export default function RegistrationForm() {
                 </a>
                 <a 
                   href={SELAR_LINK} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
                   onClick={() => localStorage.setItem('sprint_applicant', JSON.stringify(formData))}
                   className="w-full btn-editorial-outline py-4 block"
                 >

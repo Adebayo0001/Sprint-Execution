@@ -167,8 +167,6 @@ export default function Compare() {
           <div className="space-y-4">
             <a 
               href={PAYSTACK_LINK_SPRINT} 
-              target="_blank" 
-              rel="noopener noreferrer" 
               className="w-full h-[52px] border border-white text-white rounded-full flex items-center justify-center font-bold hover:bg-white hover:text-black transition-all text-base"
             >
               Join The Sprint →
@@ -176,8 +174,6 @@ export default function Compare() {
             <p className="text-center text-[#777777] text-[13px] mt-1 italic">Commitment fee discussed at registration</p>
             <a 
               href={SELAR_LINK} 
-              target="_blank" 
-              rel="noopener noreferrer" 
               className="w-full text-center text-[#777777] hover:text-white text-[13px] font-medium block transition-colors"
             >
               International? Pay via Selar →
@@ -230,8 +226,6 @@ export default function Compare() {
           <div className="space-y-4">
             <a 
               href={PAYSTACK_LINK_BUILDERS} 
-              target="_blank" 
-              rel="noopener noreferrer" 
               className="w-full h-[52px] bg-[#4f66fd] text-white rounded-full flex items-center justify-center font-bold hover:bg-[#3d51d4] transition-all text-base shimmer-effect"
             >
               Join The Builder's Track →
@@ -240,8 +234,6 @@ export default function Compare() {
             <div className="text-center space-y-3">
               <a 
                 href={SELAR_LINK} 
-                target="_blank" 
-                rel="noopener noreferrer" 
                 className="text-[#777777] hover:text-white text-[13px] font-medium block transition-colors"
               >
                 International? Pay via Selar →

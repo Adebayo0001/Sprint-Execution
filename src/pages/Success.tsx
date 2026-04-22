@@ -117,14 +117,16 @@ export default function Success() {
                <div className="flex-1">
                  <h3 className="font-bold text-lg mb-1 leading-tight">Step 1: Join Sprint Executors</h3>
                  <p className="text-xs text-white/50 mb-4 font-normal">The main accountability hub where everything happens.</p>
-                 <a 
-                   href={WHATSAPP_GROUP_EXECUTORS}
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl transition-all text-sm"
-                 >
-                   Join Sprint Executors <MessageSquare size={16} />
-                 </a>
+                  <div className="mt-4 pt-4 border-t border-white/5">
+                    <a 
+                      href={WHATSAPP_CONTACT_LINK}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-blue hover:underline text-[13px] font-medium transition-all"
+                    >
+                      Have issues with payment or make a direct transfer? Reach out on WhatsApp
+                    </a>
+                  </div>
                </div>
              </div>
           </div>
