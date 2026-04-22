@@ -774,7 +774,7 @@ function Home() {
             {/* Divider */}
             <div className="relative h-px w-full bg-white/[0.08] my-12 flex items-center justify-center">
               <span className="bg-[#1e1e1e] px-4 text-[13px] text-[#777777] italic">
-                Want more than accountability?
+                Want more than accountability for all 90 days?
               </span>
             </div>
 
