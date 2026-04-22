@@ -92,10 +92,13 @@ export default function Success() {
         </motion.div>
 
         <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight leading-[1.1]">
-          Welcome to the Cohort, {name}!
+          {isTeamSupport ? "Welcome to The Builder's Track!" : "Welcome to The Sprint!"}
         </h1>
+        <p className="text-xl font-medium mb-4 text-white/90">
+          Glad to have you, {name}!
+        </p>
         {applicant?.email && (
-          <p className="text-brand-blue font-medium mb-4 text-sm bg-brand-blue/10 inline-block px-4 py-1 rounded-full">
+          <p className="text-brand-blue font-medium mb-6 text-sm bg-brand-blue/10 inline-block px-4 py-1 rounded-full">
             Confirmed for: {applicant.email}
           </p>
         )}

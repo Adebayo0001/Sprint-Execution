@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { Check, Loader2, Send, ExternalLink, X, Users, ArrowRight } from 'lucide-react';
 import { collection, serverTimestamp, onSnapshot, doc, runTransaction, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { PAYSTACK_GROUP_LINK, PAYSTACK_TEAM_LINK, SELAR_LINK, WHATSAPP_NUMBER, WHATSAPP_CONTACT_LINK } from '../constants';
+import { PAYSTACK_LINK_SPRINT, PAYSTACK_LINK_BUILDERS, SELAR_LINK, WHATSAPP_NUMBER, WHATSAPP_CONTACT_LINK } from '../constants';
 
 interface FormData {
   full_name: string;
@@ -340,7 +340,7 @@ export default function RegistrationForm() {
               <p className="text-white/60 mb-10 text-sm leading-relaxed">Your application is saved. Secure your spot now with your commitment fee.</p>
               <div className="space-y-4">
                 <a 
-                  href={formData.support_level === 'group_plus_support' ? PAYSTACK_TEAM_LINK : PAYSTACK_GROUP_LINK} 
+                  href={formData.support_level === 'group_plus_support' ? PAYSTACK_LINK_BUILDERS : PAYSTACK_LINK_SPRINT} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   onClick={() => localStorage.setItem('sprint_applicant', JSON.stringify(formData))}
