@@ -190,7 +190,7 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 w-full h-[64px] bg-[#1e1e1e]/95 backdrop-blur-md z-[1000] border-b border-white/5 px-6 md:px-24 flex items-center justify-between">
       <div className="flex items-center">
         <span className="text-white font-bold text-lg tracking-tight">
-          The Sprint Execution Hub
+          The Sprint Execution 2026
         </span>
       </div>
       
@@ -454,7 +454,7 @@ function Home() {
           <SectionLabel>The truth about consistency</SectionLabel>
           
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-12 lg:gap-24 items-start">
-            <Headline className="text-[48px] md:text-[64px] font-bold max-w-[380px]">
+            <Headline className="text-[34px] sm:text-[48px] md:text-[64px] font-bold leading-[1.05]">
               {"You've been\nhere before."}
             </Headline>
             
@@ -464,7 +464,7 @@ function Home() {
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, delay: 0.3 }}
-                className="text-[20px] text-white/90 leading-relaxed"
+                className="text-[17px] md:text-[20px] text-white/90 leading-relaxed"
               >
                 The course is still on tab 47. The project is still in your notes app. The goal you set in January is still waiting. Not because you&apos;re lazy. Because nothing around you made it impossible to quit.
               </motion.p>
@@ -473,6 +473,7 @@ function Home() {
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, delay: 0.4 }}
+                className="text-[15px] md:text-[18px]"
               >
                 That&apos;s the real problem. Not motivation. Not talent. Not time. You just never had a structure that made showing up every single day non-negotiable.
               </motion.p>
@@ -481,7 +482,7 @@ function Home() {
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, delay: 0.5 }}
-                className="text-white italic text-[22px] font-normal leading-[1.5] border-l-2 border-brand-blue pl-8 py-2"
+                className="text-white italic text-[19px] md:text-[22px] font-normal leading-[1.5] border-l-2 border-brand-blue pl-6 md:pl-8 py-2"
               >
                 The Sprint Execution is designed to support you through that middle journey. We&apos;ve built a warm, accountability-led space to help you navigate the next 90 days, so you can finish strong and feel proud of what you&apos;ve built.
               </motion.p>

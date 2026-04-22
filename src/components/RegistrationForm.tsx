@@ -125,8 +125,9 @@ export default function RegistrationForm() {
         }
       }
 
-      setSubmittedData(formData);
-      localStorage.setItem('sprint_applicant', JSON.stringify(formData));
+      const finalData = { ...formData };
+      setSubmittedData(finalData);
+      localStorage.setItem('sprint_applicant', JSON.stringify(finalData));
       setShowModal(true);
     } catch (err: any) {
       console.error("Error saving lead:", err);
@@ -338,10 +339,34 @@ export default function RegistrationForm() {
               <h3 className="text-2xl font-bold text-white mb-4">You're in, {formData.full_name.trim().split(' ')[0]} — almost.</h3>
               <p className="text-white/60 mb-10 text-sm leading-relaxed">Your application is saved. Secure your spot now with your commitment fee.</p>
               <div className="space-y-4">
-                <a href={formData.support_level === 'group_plus_support' ? PAYSTACK_TEAM_LINK : PAYSTACK_GROUP_LINK} target="_blank" rel="noopener noreferrer" className="w-full btn-editorial-pill py-4 block">Pay via Paystack</a>
-                <a href={SELAR_LINK} target="_blank" rel="noopener noreferrer" className="w-full btn-editorial-outline py-4 block">Pay via Selar (International)</a>
+                <a 
+                  href={formData.support_level === 'group_plus_support' ? PAYSTACK_TEAM_LINK : PAYSTACK_GROUP_LINK} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  onClick={() => localStorage.setItem('sprint_applicant', JSON.stringify(formData))}
+                  className="w-full btn-editorial-pill py-4 block"
+                >
+                  Pay via Paystack
+                </a>
+                <a 
+                  href={SELAR_LINK} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  onClick={() => localStorage.setItem('sprint_applicant', JSON.stringify(formData))}
+                  className="w-full btn-editorial-outline py-4 block"
+                >
+                  Pay via Selar (International)
+                </a>
                 <div className="h-px bg-white/10 my-6" />
-                <a href={getWhatsAppLink() || WHATSAPP_CONTACT_LINK} target="_blank" rel="noopener noreferrer" className="w-full bg-[#25D366] text-white font-bold py-4 rounded-full flex items-center justify-center gap-2 hover:brightness-110 shadow-lg shadow-green-600/20">I've Paid — Notify Team <ArrowRight size={18} /></a>
+                <a 
+                  href={getWhatsAppLink() || WHATSAPP_CONTACT_LINK} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  onClick={() => localStorage.setItem('sprint_applicant', JSON.stringify(formData))}
+                  className="w-full bg-[#25D366] text-white font-bold py-4 rounded-full flex items-center justify-center gap-2 hover:brightness-110 shadow-lg shadow-green-600/20"
+                >
+                  I've Paid — Notify Team <ArrowRight size={18} />
+                </a>
               </div>
               <p className="mt-8 text-[11px] text-white/30">Your payment confirms your place. Group links follow within 24 hours.</p>
               <button onClick={() => setShowModal(false)} className="mt-6 text-[10px] text-white/30 hover:text-white underline underline-offset-4">Modify details or change plan</button>

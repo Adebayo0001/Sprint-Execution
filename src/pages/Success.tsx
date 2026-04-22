@@ -17,25 +17,36 @@ export default function Success() {
   const rawName = searchParams.get('name') || 'Executor';
   const name = rawName.trim().split(' ')[0];
   const emailSentRef = useRef(false);
+  const [applicant, setApplicant] = React.useState<any>(null);
 
   const isTeamSupport = tier === 'group_plus_support' || tier === 'Support' || trackParam === 'builders';
 
   useEffect(() => {
+    const rawApplicant = localStorage.getItem('sprint_applicant');
+    console.log("RAW localStorage 'sprint_applicant':", rawApplicant);
+
+    if (rawApplicant) {
+      try {
+        const parsed = JSON.parse(rawApplicant);
+        setApplicant(parsed);
+      } catch (e) {
+        console.error("Error parsing applicant data:", e);
+      }
+    }
+
     if (emailSentRef.current) return;
     emailSentRef.current = true;
 
     const initOnboarding = async () => {
       try {
-        const applicantData = localStorage.getItem('sprint_applicant');
-        if (!applicantData) return;
-
-        const applicant = JSON.parse(applicantData);
+        if (!rawApplicant) return;
+        const parsed = JSON.parse(rawApplicant);
         // Identify track: prefer param, fallback to tier mapping
         const track = (trackParam === 'sprint' || trackParam === 'builders') 
           ? (trackParam as 'sprint' | 'builders')
           : (isTeamSupport ? 'builders' : 'sprint');
 
-        await sendConfirmationEmail(applicant, track);
+        await sendConfirmationEmail(parsed, track);
       } catch (err) {
         // Failed email must never prevent the success page from loading
         console.error("Non-blocking error in initOnboarding:", err);
@@ -83,6 +94,11 @@ export default function Success() {
         <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight leading-[1.1]">
           Welcome to the Cohort, {name}!
         </h1>
+        {applicant?.email && (
+          <p className="text-brand-blue font-medium mb-4 text-sm bg-brand-blue/10 inline-block px-4 py-1 rounded-full">
+            Confirmed for: {applicant.email}
+          </p>
+        )}
         <p className="text-white/60 mb-10 leading-relaxed font-normal">
           Your commitment has been recorded. You are now part of the 50 executors for Cohort 1.0. 
           Follow the steps below to finalize your onboarding.
