@@ -6,9 +6,12 @@
 export const PAYSTACK_GROUP_LINK = "https://paystack.shop/pay/sprintexecution";
 export const PAYSTACK_TEAM_LINK = "https://paystack.shop/pay/sprintexecution-";
 export const SELAR_LINK = "https://selar.co/sprint-execution";
-export const WHATSAPP_NUMBER = "2348000000000";
+export const WHATSAPP_NUMBER = "2348120723575";
+export const WHATSAPP_CONTACT_LINK = `https://wa.me/${WHATSAPP_NUMBER}`;
 export const WHATSAPP_GROUP_EXECUTORS = "https://chat.whatsapp.com/LPL7wmb6WMtF0hPWG23eJv?mode=gi_t";
 export const WHATSAPP_GROUP_SUPPORT = "https://chat.whatsapp.com/EzV41X0G5IEA4Dmf7EE0qd?mode=gi_t";
+export const SUPPORT_EMAIL = "thevazmedia@gmail.com";
+export const SAMPLE_WORK_LINK = "https://lagos-midnight-259803017967.us-west1.run.app/";
 
 export const BRAND_COLORS = {
   primary: "#4f66fd",

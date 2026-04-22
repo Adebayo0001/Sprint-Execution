@@ -3,16 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { X, Menu, ArrowRight, CheckCircle2, Users } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
+import { X, ArrowRight, Check, Users, ExternalLink } from 'lucide-react';
 import { doc, onSnapshot, collection, query, orderBy, limit } from 'firebase/firestore';
 import { db } from './lib/firebase';
 import RegistrationForm from './components/RegistrationForm';
-import { DRIVE_HIGHLIGHTS, getDriveThumbnail } from './constants';
-
-import { BrowserRouter, Routes, Route, Link as RouterLink } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Success from './pages/Success';
+import { SUPPORT_EMAIL, SAMPLE_WORK_LINK, getDriveThumbnail } from './constants';
 
 const LiveActivityToast = () => {
   const [activity, setActivity] = useState<any>(null);
@@ -23,7 +22,6 @@ const LiveActivityToast = () => {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       if (!snapshot.empty) {
         const data = snapshot.docs[0].data();
-        // Only show if it's new (within last 30 seconds)
         const timestamp = data.created_at?.toDate()?.getTime();
         const now = Date.now();
         if (timestamp && (now - timestamp) < 30000) {
@@ -63,530 +61,930 @@ const LiveActivityToast = () => {
   );
 };
 
-// Helper for smooth scroll
-const scrollTo = (id: string) => {
-  const el = document.getElementById(id);
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth' });
-  }
+// Custom Hook for reduced motion
+const useReducedMotion = () => {
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(mediaQuery.matches);
+    const listener = (event: MediaQueryListEvent) => setReducedMotion(event.matches);
+    mediaQuery.addEventListener('change', listener);
+    return () => mediaQuery.removeEventListener('change', listener);
+  }, []);
+  return reducedMotion;
 };
 
-function Home() {
-  const [showBanner, setShowBanner] = useState(true);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [participantCount, setParticipantCount] = useState<number | null>(null);
+// Reusable Section Label
+const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+  <motion.span 
+    initial={{ opacity: 0, x: -20 }}
+    whileInView={{ opacity: 1, x: 0 }}
+    viewport={{ once: true }}
+    transition={{ duration: 0.5, delay: 0.2 }}
+    className="editorial-label"
+  >
+    {children}
+  </motion.span>
+);
+
+// Animated Headline
+const Headline = ({ children, className = "" }: { children: string, className?: string }) => {
+  const lines = children.split('\n');
+  return (
+    <h2 className={`editorial-headline ${className}`}>
+      {lines.map((line, i) => (
+        <span key={i} className="block overflow-hidden pb-1">
+          <motion.span
+            initial={{ y: 80, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, ease: [0.33, 1, 0.68, 1], delay: i * 0.1 }}
+            className="block"
+          >
+            {line}
+          </motion.span>
+        </span>
+      ))}
+    </h2>
+  );
+};
+
+const CountdownSection = () => {
+  const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, mins: number, secs: number } | null>(null);
+  const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
-    // Real-time listener for public registration counter
-    const unsubscribe = onSnapshot(doc(db, 'global_stats', 'registration_count'), (doc) => {
-      if (doc.exists()) {
-        setParticipantCount(doc.data().count);
-      } else {
-        setParticipantCount(0);
-      }
-    });
+    // April 30, 2026 at 11:59 PM Nigeria time (UTC+1)
+    // This is equivalent to April 30, 2026 22:59:59 UTC
+    const targetDate = new Date('2026-04-30T22:59:59Z').getTime();
 
-    let ticking = false;
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          setScrolled(window.scrollY > 50);
-          ticking = false;
-        });
-        ticking = true;
+    const timer = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = targetDate - now;
+
+      if (distance < 0) {
+        clearInterval(timer);
+        setIsExpired(true);
+      } else {
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const mins = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((distance % (1000 * 60)) / 1000);
+        setTimeLeft({ days, hours, mins, secs });
       }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, []);
 
   return (
-    <>
-      <LiveActivityToast />
-      {/* Sticky Banner */}
-      <AnimatePresence>
-        {showBanner && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="fixed top-0 left-0 right-0 z-50 bg-brand-blue text-white py-2 px-6 flex items-center justify-center text-[10px] md:text-xs font-medium tracking-tight"
-          >
-            <span className="text-center flex items-center gap-2">
-              Sprint Execution 2026 — 1.0 · 
-              {participantCount !== null ? (
-                <span className="bg-white/20 px-2 py-0.5 rounded">
-                  {Math.max(0, 50 - participantCount)} Spots Remaining
-                </span>
-              ) : (
-                "50 Spots Only"
-              )} 
-              · Commitment Required · Applications Now Open
-            </span>
-            <button 
-              onClick={() => setShowBanner(false)}
-              className="absolute right-4 hover:opacity-70 transition-opacity"
-            >
-              <X size={14} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Navigation */}
-      <nav className={`glass-nav ${showBanner ? 'mt-8 md:mt-10' : 'mt-0'} transition-all duration-300`}>
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="font-bold text-lg tracking-tight">The Sprint Execution Hub</div>
-          
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-            <button onClick={() => scrollTo('how-it-works')} className="hover:text-brand-blue transition-colors">How It Works</button>
-            <button onClick={() => scrollTo('who-its-for')} className="hover:text-brand-blue transition-colors">Who It's For</button>
-            <button onClick={() => scrollTo('highlights')} className="hover:text-brand-blue transition-colors">Highlights</button>
-            <button onClick={() => scrollTo('about')} className="hover:text-brand-blue transition-colors">About</button>
-            <button 
-              onClick={() => scrollTo('apply')}
-              className="bg-brand-blue px-6 py-2 rounded-full hover:brightness-110 active:scale-95 transition-all"
-            >
-              Apply Now
-            </button>
+    <div className="bg-[#111111] w-full border-b border-white/5 py-8 md:py-10">
+      <div className="max-w-7xl mx-auto px-6 md:px-24">
+        {isExpired ? (
+          <div className="text-center text-[#ef4444] font-bold text-lg md:text-xl py-4">
+            Registration is now closed.
           </div>
+        ) : (
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="space-y-1">
+              <span className="text-brand-blue text-[11px] font-bold uppercase tracking-widest block mb-1">
+                COHORT 1.0 — 2026
+              </span>
+              <p className="text-white text-lg font-semibold">Registration closes April 30th</p>
+              <p className="text-[#999999] text-sm">Cohort begins May 4th — 50 spots only</p>
+            </div>
 
-          <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            <Menu size={24} />
+            <div className="flex gap-3 md:gap-4 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+              {[
+                { label: 'Days', value: timeLeft?.days ?? 0 },
+                { label: 'Hours', value: timeLeft?.hours ?? 0 },
+                { label: 'Mins', value: timeLeft?.mins ?? 0 },
+                { label: 'Secs', value: timeLeft?.secs ?? 0 }
+              ].map((box, i) => (
+                <div 
+                  key={i} 
+                  className="bg-[#1e1e1e] border border-brand-blue/30 rounded-lg py-4 px-5 min-w-[72px] md:min-w-[80px] text-center flex flex-col justify-center"
+                >
+                  <span className="text-2xl md:text-3xl font-bold text-white tabular-nums">
+                    {String(box.value).padStart(2, '0')}
+                  </span>
+                  <span className="text-[10px] md:text-[11px] text-brand-blue font-bold uppercase tracking-widest mt-1">
+                    {box.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const Navbar = () => {
+  const scrollToSection = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  return (
+    <nav className="fixed top-0 left-0 w-full h-[64px] bg-[#1e1e1e]/95 backdrop-blur-md z-[1000] border-b border-white/5 px-6 md:px-24 flex items-center justify-between">
+      <div className="flex items-center">
+        <span className="text-white font-bold text-lg tracking-tight">
+          The Sprint Execution Hub
+        </span>
+      </div>
+      
+      <div className="hidden lg:flex items-center gap-8">
+        {[
+          { label: 'How It Works', id: 'how-it-works' },
+          { label: 'Who It\'s For', id: 'who-it-is-for' },
+          { label: 'Highlights', id: 'highlights' },
+          { label: 'About', id: 'about' }
+        ].map((item) => (
+          <button
+            key={item.id}
+            onClick={() => scrollToSection(item.id)}
+            className="text-[13px] uppercase tracking-widest text-white/60 hover:text-brand-blue font-medium transition-colors cursor-pointer"
+          >
+            {item.label}
           </button>
-        </div>
+        ))}
+        
+        <button
+          onClick={() => scrollToSection('apply')}
+          className="bg-brand-blue text-white text-[12px] uppercase tracking-wider font-semibold px-6 py-2.5 rounded-full hover:scale-105 transition-transform"
+        >
+          Apply Now
+        </button>
+      </div>
+      
+      {/* Mobile Menu Button - Optional simplified version */}
+      <div className="lg:hidden">
+        <button onClick={() => scrollToSection('apply')} className="bg-brand-blue text-white text-[10px] uppercase tracking-widest font-bold px-4 py-2 rounded-full">
+          Apply
+        </button>
+      </div>
+    </nav>
+  );
+};
 
-        {/* Mobile Menu */}
-        <AnimatePresence>
-          {isMenuOpen && (
+function Home() {
+  const reducedMotion = useReducedMotion();
+  const [participantCount, setParticipantCount] = useState<number | null>(null);
+  const heroRef = useRef(null);
+  const { scrollY } = useScroll();
+  
+  const parallaxValue = useTransform(scrollY, [0, 1000], [0, -300]);
+  const parallaxValueHeroNum = useTransform(scrollY, [0, 1000], [0, -200]);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, 'global_stats', 'registration_count'), (doc) => {
+      if (doc.exists()) setParticipantCount(doc.data().count);
+      else setParticipantCount(0);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const scrollToApply = () => {
+    document.getElementById('apply')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  return (
+    <main className="selection:bg-brand-blue/30 selection:text-white">
+      <Navbar />
+      <div className="pt-[64px]">
+        <CountdownSection />
+        <LiveActivityToast />
+
+        {/* SECTION 1 — THE HOOK (Hero) */}
+        <section ref={heroRef} className="relative min-h-screen flex flex-col justify-center px-6 md:px-24 pt-12 pb-12 overflow-hidden bg-[#1e1e1e]">
+        {/* Background treatment */}
+        <div className="absolute inset-0 dot-grid pointer-events-none" />
+        
+        {/* Animated Radial Orb */}
+        <motion.div 
+          animate={reducedMotion ? {} : { 
+            x: [0, 30, -20, 0], 
+            y: [0, -20, 10, 0],
+            scale: [1, 1.1, 0.95, 1]
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-0 right-0 w-[800px] h-[800px] bg-brand-blue/18 rounded-full blur-[160px] -mr-64 -mt-64 pointer-events-none" 
+        />
+        
+        {/* Geometric Triangles */}
+        <div 
+          className="absolute top-0 right-0 w-[400px] h-[400px] bg-brand-blue/5 pointer-events-none" 
+          style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }} 
+        />
+        <div 
+          className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-brand-blue/5 pointer-events-none" 
+          style={{ clipPath: 'polygon(0 0, 0 100%, 100% 100%)' }} 
+        />
+
+        {/* Decorative 90 */}
+        <motion.div 
+          style={reducedMotion ? {} : { y: parallaxValueHeroNum }}
+          className="hidden lg:block absolute right-24 top-1/2 -translate-y-1/2 font-bold text-[320px] text-white opacity-[0.03] pointer-events-none tracking-tighter"
+        >
+          90
+        </motion.div>
+
+        {/* Hero Image */}
+        <motion.div
+          initial={{ opacity: 0, x: 100, scale: 0.9 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          transition={{ duration: 1.2, delay: 0.5, ease: [0.23, 1, 0.32, 1] }}
+          className="hidden lg:block absolute right-[-5%] top-[15%] w-[45%] h-[70%] z-0"
+        >
+          <div className="relative w-full h-full">
+            {/* Image Glow */}
+            <div className="absolute inset-0 bg-brand-blue/20 blur-[100px] rounded-full scale-75 translate-x-12 translate-y-12" />
+            
+            <img 
+              src={getDriveThumbnail("1OB0ZE1Kmb3Q_PSYXKh7YmSDDk0MvodRs")}
+              alt="The Sprint Execution Hero"
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover rounded-[2rem] shadow-2xl skew-y-[-2deg] border border-white/10"
+            />
+            
+            {/* Floating Element */}
+            <motion.div
+              animate={{ y: [0, -20, 0] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -bottom-8 -left-8 bg-[#222222] border border-white/10 p-6 rounded-2xl shadow-xl backdrop-blur-xl"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-brand-blue/20 flex items-center justify-center">
+                  <motion.div 
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="w-3 h-3 rounded-full bg-brand-blue" 
+                  />
+                </div>
+                <div>
+                  <p className="text-white text-sm font-bold">Live Execution Hub</p>
+                  <p className="text-white/40 text-[11px] uppercase tracking-wider">Cohort 1.0 Active</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
+
+        <div className="max-w-[720px] relative z-10 w-full py-12 md:py-20">
+          {/* Badges Row */}
+          <div className="flex flex-wrap items-center gap-3 mb-10">
+            {/* Badge 1 */}
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="md:hidden absolute top-20 left-0 right-0 bg-brand-dark-lighter border-b border-white/5 p-6 flex flex-col gap-6 text-sm font-medium"
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="inline-block border border-brand-blue/40 rounded-full px-5 py-1.5 bg-brand-blue/5 backdrop-blur-sm"
             >
-              <button onClick={() => { scrollTo('how-it-works'); setIsMenuOpen(false); }}>How It Works</button>
-              <button onClick={() => { scrollTo('who-its-for'); setIsMenuOpen(false); }}>Who It's For</button>
-              <button onClick={() => { scrollTo('highlights'); setIsMenuOpen(false); }}>Highlights</button>
-              <button onClick={() => { scrollTo('about'); setIsMenuOpen(false); }}>About</button>
-              <button 
-                onClick={() => { scrollTo('apply'); setIsMenuOpen(false); }}
-                className="bg-brand-blue w-full py-4 rounded-full text-center"
-              >
-                Apply Now
-              </button>
+              <span className="text-brand-blue text-[11px] font-medium tracking-widest uppercase">
+                50 Persons Only — Cohort 1.0
+              </span>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </nav>
 
-      {/* Hero Section */}
-
-      <section className="pt-32 pb-20 px-6 relative subtle-grid min-h-[90vh] flex items-center">
-        {/* Decorations */}
-        <div className="absolute top-20 right-[10%] w-32 h-32 border-r border-t border-brand-blue/10 rotate-45 pointer-events-none" />
-        <div className="absolute bottom-20 left-[5%] w-48 h-48 border-l border-b border-brand-blue/10 -rotate-12 pointer-events-none" />
-        
-        <div className="max-w-7xl mx-auto w-full relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Badge 2 - Live Counter */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
+              transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
+              className="inline-flex items-center gap-2 border border-white/10 rounded-full px-5 py-1.5 bg-white/5 backdrop-blur-sm"
             >
-            <div className="flex items-center gap-2 mb-8">
-                <div className="inline-flex items-center gap-2 border border-brand-blue/40 text-brand-blue py-1.5 px-4 rounded-full text-[10px] md:text-xs font-bold tracking-wider uppercase">
-                  50 Persons Only — Cohort 1.0
-                </div>
-                {participantCount !== null && (
-                  <motion.div 
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center gap-2 bg-brand-blue/10 border border-brand-blue/20 py-1.5 px-3 rounded-full"
-                  >
-                    <Users size={12} className="text-brand-blue" />
-                    <span className="text-[10px] md:text-xs font-bold text-white/80">
-                      {participantCount} / 50 <span className="text-white/40">Applied</span>
-                    </span>
-                  </motion.div>
-                )}
-              </div>
-              
-              <h1 className="text-5xl md:text-7xl font-bold leading-[1.1] mb-8 tracking-tighter">
-                The Sprint Execution <br /> 2026 – 1.0
-              </h1>
-              
-              <p className="text-xl md:text-2xl text-white/70 font-light mb-12">
-                90 Days. Daily Accountability. Real Results.
-              </p>
-
-              <div className="space-y-5 mb-12">
-                {[
-                  "Learn a new skill — and actually finish it",
-                  "Complete a course, project, or career shift",
-                  "Build the habit of getting things done — and stay accountable doing it"
-                ].map((benefit, i) => (
-                  <div key={i} className="flex items-center gap-4">
-                    <div className="w-5 h-5 md:w-6 md:h-6 bg-brand-blue rounded-full flex items-center justify-center flex-shrink-0">
-                      <CheckCircle2 size={14} className="text-white" />
-                    </div>
-                    <span className="text-base md:text-lg font-bold">{benefit}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex flex-col items-start gap-4">
-                <button onClick={() => scrollTo('apply')} className="btn-primary flex items-center gap-2 text-lg">
-                  Secure My Spot <ArrowRight size={20} />
-                </button>
-                <p className="text-xs text-white/40 ml-2">Limited to 50 participants. Commitment required.</p>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="absolute inset-0 bg-brand-blue/20 blur-[100px] rounded-full pointer-events-none" />
-              <div className="relative border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl skew-x-1">
-                <img 
-                  src={getDriveThumbnail("1OB0ZE1Kmb3Q_PSYXKh7YmSDDk0MvodRs")} 
-                  alt="Sprint Execution Hero"
-                  referrerPolicy="no-referrer"
-                  className="w-full h-auto"
-                />
-              </div>
-              {/* Decorative detail */}
-              <div className="absolute -bottom-6 -right-6 w-24 h-24 border-b-2 border-r-2 border-brand-blue/30 rounded-br-3xl pointer-events-none" />
+              <Users size={12} className="text-brand-blue" />
+              <span className="text-[11px] font-medium tracking-wider">
+                <span className="text-white">{participantCount ?? '...'} / 50</span>
+                <span className="text-white/40 ml-1.5 uppercase">Applied</span>
+              </span>
             </motion.div>
           </div>
-        </div>
-      </section>
-
-      {/* Story Section */}
-      <section className="py-24 px-6 bg-brand-dark-lighter">
-        <div className="max-w-4xl mx-auto">
-          <span className="text-brand-blue text-xs font-bold tracking-[0.3em] uppercase block mb-4">
-            Why We Built This
-          </span>
-          <h2 className="text-3xl md:text-5xl font-bold mb-12 leading-tight tracking-tight">
-            We started this because we saw that getting something done alone feels overwhelming.
-          </h2>
           
-          <div className="space-y-8 text-lg text-white/70 leading-relaxed max-w-3xl">
-            <p>
-              The first edition of The Sprint Execution was completely free. We wanted to prove something — that with the right system, the right environment, and the right level of accountability, people can get extraordinary things done. And they did.
-            </p>
-            <p>
-              But free also attracted the wrong energy. People who weren't ready. People who joined but didn't show up. And that hurt the ones who were serious.
-            </p>
-            <p>
-              We wrestled with making this paid. Honestly, it wasn't an easy decision. But we realized: a commitment fee isn't about the money. It's a filter. It signals that you're choosing to be here — that you're not just curious, you're ready.
-            </p>
-            
-            <blockquote className="border-l-2 border-brand-blue pl-8 py-2 italic text-white text-xl md:text-2xl mt-12 bg-white/5 pr-6 rounded-r-lg">
-              "So we made it 'pay what you have.' This isn't close to the value you'll receive. Not even close. But it ensures we work with people who mean it. People who want to get something done."
-            </blockquote>
-          </div>
-        </div>
-      </section>
-
-      {/* Who It's For */}
-      <section id="who-its-for" className="py-24 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-16">
-            <span className="text-brand-blue text-xs font-bold tracking-[0.3em] uppercase block mb-4">
-              This Is For You If…
-            </span>
-            <h2 className="text-3xl md:text-5xl font-bold tracking-tight">
-              Whether you're starting, stuck, or <br className="hidden md:block" /> starting over — you belong here.
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { title: "You want to learn something new", desc: "You've been saying it for months. Let's make it happen in 90 days." },
-              { title: "You're changing careers", desc: "The roadmap feels unclear. We'll build one with you — step by step." },
-              { title: "You're building a habit", desc: "Not the motivational kind. The real, hard-won, daily kind." },
-              { title: "You want to finally finish what you started", desc: "A course, a project, a goal. Let's cross the finish line." },
-              { title: "You want to live with discipline", desc: "Not restriction. Discipline as freedom. The kind that compounds." },
-              { title: "You want to stay consistent", desc: "90 days with structure, accountability, and people who won't let you quit." }
-            ].map((card, i) => (
-              <motion.div
+          {/* Headline */}
+          <h1 className="text-[44px] md:text-[80px] font-bold text-white leading-[1.1] tracking-[-0.02em] mb-8">
+            {["The", "Sprint", "Execution", "2026", "–", "1.0"].map((word, i) => (
+              <motion.span
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="bg-brand-dark-card border border-brand-blue/10 p-8 rounded-3xl hover:border-brand-blue/30 transition-all duration-300"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 + i * 0.1, ease: "easeOut" }}
+                className="inline-block mr-[0.2em] last:mr-0"
               >
-                <div className="w-10 h-10 bg-brand-blue/10 text-brand-blue rounded-xl flex items-center justify-center mb-6">
-                  <CheckCircle2 size={20} />
-                </div>
-                <h3 className="text-xl font-bold mb-3">{card.title}</h3>
-                <p className="text-white/50 text-sm leading-relaxed">{card.desc}</p>
-              </motion.div>
+                {word}
+                {i === 2 && <br className="hidden md:block" />}
+              </motion.span>
             ))}
-          </div>
-        </div>
-      </section>
+          </h1>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="py-24 px-6 bg-brand-dark-lighter">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-20">
-            <span className="text-brand-blue text-xs font-bold tracking-[0.3em] uppercase block mb-4">
-              The System
-            </span>
-            <h2 className="text-3xl md:text-5xl font-bold tracking-tight">
-              This is what 90 days of real accountability looks like.
-            </h2>
-          </div>
-
-          <div className="relative space-y-16">
-            {/* Vertical Line */}
-            <div className="absolute left-[15px] top-4 bottom-4 w-px bg-brand-blue/20" />
-            
-            {[
-              { step: "Step 1", title: "You Apply and Commit", content: "You fill out the form, tell us what you want to get done, and make your commitment fee. This is what gets you in." },
-              { step: "Step 2", title: "You're Added to the Sprint Group", content: "Every participant enters the same accountability group. Daily check-ins. Real people. Real progress. Monday to Friday." },
-              { step: "Step 3", title: "Daily Execution, Monday to Friday", content: "Every day, you work. Not average work — work that requires your mind, your skill, and your full attention. At the end of each day, you report what you accomplished." },
-              { step: "Step 4", title: "We Walk With You", content: "This isn't a challenge you do alone. We're in it with you. The team reviews reports, calls out drift, celebrates wins, and holds the standard high for 90 days." },
-              { step: "Step 5", title: "You Come Out Different", content: "By the time the Sprint ends, you will have built something real. A skill. A habit. A completed project. A new career path. A version of yourself that executes." }
-            ].map((item, i) => (
-              <motion.div 
-                key={i} 
-                className="relative pl-12 flex flex-col gap-2"
-                initial={{ opacity: 0, x: -10 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-              >
-                <div className="absolute left-0 top-1 w-[32px] h-[32px] bg-brand-dark-lighter border-2 border-brand-blue rounded-full flex items-center justify-center text-[10px] font-bold text-brand-blue z-10 transition-colors">
-                  {i + 1}
-                </div>
-                <div className="text-brand-blue text-[10px] font-bold tracking-widest uppercase">{item.step}</div>
-                <h3 className="text-2xl font-bold">{item.title}</h3>
-                <p className="text-white/60 leading-relaxed max-w-2xl">{item.content}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Support Section */}
-      <section className="py-24 px-6">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl md:text-5xl font-bold mb-12 tracking-tight">
-            Some people want to go deeper. We built that too.
-          </h2>
-          
-          <div className="space-y-8 text-lg text-white/70 leading-relaxed mb-16">
-            <p>
-              Everyone in the Sprint has access to the same group, the same daily check-ins, the same accountability system. That's the foundation — and it's powerful on its own.
-            </p>
-            <p>
-              But some people come in without a clear direction. They know they want to grow, but they're not sure what to build, what to learn, or where to begin. For those people, we go further.
-            </p>
-            <p>
-              If you want direct involvement from the team — a personal roadmap, a learning curriculum built around your exact goals, course recommendations that match where you're headed, and access to programs and resources from Adebayo Kareem's growing content library — you can choose to go deeper when you register.
-            </p>
-            <p>
-              This includes access to upcoming programs like the AI in 2026 Bootcamp, the Advanced AI Flyer Design Course, and other resources as they launch throughout the year.
-            </p>
-            <p className="font-bold text-white">
-              This isn't a different tier. It's a different level of commitment — and a different level of result.
-            </p>
-          </div>
-
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="bg-brand-dark-card border border-brand-blue p-8 md:p-12 rounded-3xl relative overflow-hidden"
+          {/* Subheadline */}
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 1 }}
+            className="text-[20px] font-normal leading-[1.5] text-[#cccccc] mb-8 lg:mb-12"
           >
-            <div className="absolute top-0 right-0 w-48 h-48 bg-brand-blue/10 rounded-full -mr-24 -mt-24 blur-3xl" />
-            <h3 className="text-2xl font-bold mb-8">Group + Team Support — Maximum Growth Pathway</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-              <div className="space-y-6">
-                {[
-                  "Personalized 90-day execution roadmap",
-                  "Dedicated 1-on-1 meeting with Adebayo Kareem (Limited)",
-                  "Access to premium paid frameworks",
-                  "Access to expert-tested paid templates",
-                  "How to build apps & websites professionally with AI"
-                ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-4">
-                    <div className="w-5 h-5 bg-brand-blue/10 text-brand-blue rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <CheckCircle2 size={12} />
-                    </div>
-                    <span className="text-white font-medium">{item}</span>
-                  </div>
-                ))}
-              </div>
+            90 Days. Daily Accountability. Real Results.
+          </motion.p>
 
-              <div className="space-y-6 bg-white/5 p-6 rounded-2xl border border-white/5">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-brand-blue font-bold mb-4">You'll learn to build:</p>
-                <div className="space-y-4">
-                  {[
-                    { name: "Live Portfolios", url: "https://adebayokareem.vercel.app/" },
-                    { name: "SaaS & Productivity Apps", url: "https://lagos-midnight-259803017967.us-west1.run.app" },
-                    { name: "Professional E-com Platforms", url: "https://elgantme.lovable.app" }
-                  ].map((link, i) => (
-                    <a 
-                      key={i}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between group/link"
-                    >
-                      <span className="text-sm font-semibold group-hover/link:text-brand-blue transition-colors">{link.name}</span>
-                      <ArrowRight size={14} className="text-white/20 group-hover/link:text-brand-blue transition-all" />
-                    </a>
-                  ))}
+          {/* Mobile Hero Image */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className="lg:hidden w-full aspect-video mb-12 relative"
+          >
+            <img 
+              src={getDriveThumbnail("1OB0ZE1Kmb3Q_PSYXKh7YmSDDk0MvodRs")}
+              alt="The Sprint Execution Mobile Hero"
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover rounded-2xl border border-white/10 shadow-lg"
+            />
+          </motion.div>
+
+          {/* Bullets */}
+          <div className="space-y-4 mb-12">
+            {[
+              "Learn a new skill — and actually finish it",
+              "Complete a course, project, or career shift",
+              "Build the habit of getting things done — and stay accountable doing it"
+            ].map((bullet, idx) => (
+              <motion.div 
+                key={idx}
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 1.2 + idx * 0.15 }}
+                className="flex items-start gap-4"
+              >
+                <div className="w-6 h-6 rounded-full bg-brand-blue flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Check size={14} className="text-white stroke-[3px]" />
                 </div>
-              </div>
-            </div>
-            
+                <span className="text-[17px] text-white font-medium leading-relaxed">
+                  {bullet}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Button */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 1.8 }}
+          >
             <button 
-              onClick={() => scrollTo('apply')}
-              className="w-full md:w-auto bg-brand-blue px-10 py-4 rounded-full font-bold hover:brightness-110 active:scale-95 transition-all text-center"
+              onClick={scrollToApply} 
+              className="relative overflow-hidden bg-brand-blue text-white font-semibold text-[18px] py-[18px] px-[40px] rounded-full transition-all duration-300 hover:scale-[1.04] hover:shadow-[0_0_30px_rgba(79,102,253,0.5)] group shimmer-effect"
             >
-              Apply for Team Support
+              <span className="relative z-10 flex items-center">
+                Secure My Spot
+                <ArrowRight className="inline-block ml-3 group-hover:translate-x-1 transition-transform" size={20} />
+              </span>
             </button>
+            <p className="mt-8 text-[13px] text-[#666666] font-medium tracking-wide">
+              Limited to 50 participants. Commitment required.
+            </p>
           </motion.div>
         </div>
       </section>
 
-      {/* About Section */}
-      <section id="about" className="py-24 px-6 bg-brand-dark-lighter">
+      {/* SECTION 2 — THE TRUTH */}
+      <section className="pt-[56px] pb-[56px] md:pt-[80px] md:pb-[80px] px-6 md:px-24 bg-brand-dark">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-            <div>
-              <span className="text-brand-blue text-xs font-bold tracking-[0.3em] uppercase block mb-4">
-                Who We Are
+          <SectionLabel>The truth about consistency</SectionLabel>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-12 lg:gap-24 items-start">
+            <Headline className="text-[48px] md:text-[64px] font-bold max-w-[380px]">
+              {"You've been\nhere before."}
+            </Headline>
+            
+            <div className="space-y-8 max-w-2xl">
+              <motion.p 
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+                className="text-[20px] text-white/90 leading-relaxed"
+              >
+                The course is still on tab 47. The project is still in your notes app. The goal you set in January is still waiting. Not because you&apos;re lazy. Because nothing around you made it impossible to quit.
+              </motion.p>
+              <motion.p 
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              >
+                That&apos;s the real problem. Not motivation. Not talent. Not time. You just never had a structure that made showing up every single day non-negotiable.
+              </motion.p>
+              <motion.p 
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+                className="text-white italic text-[22px] font-normal leading-[1.5] border-l-2 border-brand-blue pl-8 py-2"
+              >
+                The Sprint Execution is designed to support you through that middle journey. We&apos;ve built a warm, accountability-led space to help you navigate the next 90 days, so you can finish strong and feel proud of what you&apos;ve built.
+              </motion.p>
+            </div>
+          </div>
+          
+          <div className="mt-24 h-px w-full bg-white/10" />
+        </div>
+      </section>
+
+      {/* SECTION 3 — THE SYSTEM */}
+      <section id="how-it-works" className="pt-[56px] pb-[56px] md:pt-[80px] md:pb-[80px] bg-[#0a0a0a] overflow-hidden">
+        <div className="px-6 md:px-24">
+          <div className="max-w-7xl mx-auto mb-10">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
+              <div className="max-w-2xl">
+                <SectionLabel>How The Sprint Works</SectionLabel>
+                <h2 className="text-[40px] md:text-[52px] font-bold text-white leading-[1.1] tracking-[-0.02em] mt-0">
+                  Five steps. Ninety days. One version of you that actually executes.
+                </h2>
+              </div>
+              <div className="hidden md:block">
+                <span className="text-[13px] text-white/40 uppercase tracking-[0.2em] font-medium">
+                  Scroll to see all steps →
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Steps Container */}
+          <div className="max-w-4xl mx-auto relative px-4">
+            {/* Roadmap Line (Vertical) */}
+            <div className="absolute left-[30px] md:left-1/2 top-0 bottom-0 w-[1px] bg-brand-blue/30 z-0" />
+            
+            <div className="flex flex-col gap-12 relative z-10">
+              {[
+                { 
+                  title: "You make the decision.", 
+                  body: "Not tomorrow. Not when you feel ready. Right now — you fill out the form, name what you want to get done, and make your commitment fee. That single act separates you from everyone still thinking about it." 
+                },
+                { 
+                  title: "You're Added to the Sprint Group", 
+                  body: "Every participant joins the same space. Monday to Friday, every week, for 90 days. This is not a course group chat. There are no motivational quotes here. This is an execution environment — and the standard is real." 
+                },
+                { 
+                  title: "Daily Execution, Monday to Friday", 
+                  body: "Each day, you do something significant. Work that demands your mind, your skill, and your full attention. When the day ends, you report what you built, learned, or completed. No average tasks. No half-effort." 
+                },
+                { 
+                  title: "We hold you to it.", 
+                  body: "The team reads every single report. We notice when you drift. We call it out before it becomes a pattern. We celebrate the real wins. The environment stays clean because we protect it — every day." 
+                },
+                { 
+                  title: "You come out different.", 
+                  body: "Not just with a completed goal — though you'll have that. You come out as someone who knows they can start something hard and finish it. That identity is worth more than any single result." 
+                }
+              ].map((step, i) => (
+                <div key={i} className="relative group">
+                  {/* Milestone Marker & Connector */}
+                  <div className="absolute left-[30px] md:left-1/2 top-8 -translate-x-1/2 z-20 flex flex-col items-center">
+                    <div className="w-4 h-4 rounded-full bg-[#0a0a0a] border-2 border-brand-blue flex items-center justify-center group-hover:scale-125 transition-transform duration-300">
+                      <div className="w-1.5 h-1.5 rounded-full bg-brand-blue" />
+                    </div>
+                    {i < 4 && (
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        className="mt-12 text-brand-blue/60"
+                      >
+                        <ArrowRight className="rotate-90" size={20} />
+                      </motion.div>
+                    )}
+                  </div>
+
+                  {/* Card Content */}
+                  <div className={`flex flex-col ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} items-center gap-8 md:gap-24`}>
+                    <div className="w-full md:w-1/2" /> {/* Spacer */}
+                    <motion.div 
+                      initial={{ opacity: 0, x: i % 2 === 0 ? 40 : -40 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6, delay: 0.1 }}
+                      className="w-full md:w-1/2 relative bg-[#151515] p-8 md:p-10 min-h-[320px] transition-all duration-300 hover:bg-[#1a1a1a] border border-white/5 hover:border-brand-blue/40 rounded-2xl overflow-hidden pl-16 md:pl-10"
+                    >
+                      {/* Decorative Step Number */}
+                      <span className="absolute -top-10 -left-6 font-bold text-[180px] text-brand-blue opacity-[0.08] pointer-events-none select-none z-0 group-hover:opacity-[0.12] transition-opacity">
+                        {i + 1}
+                      </span>
+
+                      <div className="relative z-10">
+                        <div className="mb-6 flex items-center justify-between">
+                          <span className="text-[11px] font-medium uppercase tracking-[0.15em] text-brand-blue">Phase 0{i + 1}</span>
+                        </div>
+                        <h3 className="text-2xl font-semibold text-white mb-4 leading-tight">
+                          {step.title}
+                        </h3>
+                        <p className="text-[16px] text-white/50 leading-[1.8] font-normal">
+                          {step.body}
+                        </p>
+                      </div>
+                    </motion.div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 4 — WHO THIS IS FOR */}
+      <section id="who-it-is-for" className="pt-[56px] pb-[56px] md:pt-[80px] md:pb-[80px] px-6 md:px-24 bg-brand-dark">
+        <div className="max-w-7xl mx-auto">
+          <SectionLabel>This is for you</SectionLabel>
+          <Headline className="mb-12 text-[40px] md:text-[56px]">
+            {"Whether you're building,\nshifting, or starting over —\nthere is a place for you here."}
+          </Headline>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              { title: "The learner", desc: "You want to learn something new — and actually finish it this time. Not tab 47 of a YouTube playlist. A real skill, completed." },
+              { title: "The career shifter", desc: "You know what you want to move toward. You just need a clear path and people who will hold you to it every single day." },
+              { title: "The builder", desc: "You have something to build — a project, a product, a body of work. The Sprint gives you the environment to build it without drifting." },
+              { title: "The unfinished", desc: "There's something you started that never got done. A course. A goal. A version of yourself you almost became. Let's finish it." },
+              { title: "The consistent one", desc: "You're not looking for motivation. You already know discipline is the answer. You just need the right structure around you." },
+              { title: "The direction-seeker", desc: "You want to grow but you're not sure into what. We'll help you build a clear roadmap — then hold you to executing it." }
+            ].map((card, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, scale: 0.97 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.12 }}
+                className="bg-[#222222] p-8 md:p-10 rounded-xl border-l-[3px] border-brand-blue"
+              >
+                <h3 className="text-xl font-bold text-white mb-4">{card.title}</h3>
+                <p className="text-sm leading-relaxed">{card.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* MARQUEE TICKER */}
+      <div className="w-full bg-[#4f66fd] overflow-hidden whitespace-nowrap py-0 flex items-center h-[52px]">
+        <motion.div 
+          animate={{ x: [0, "-50%"] }}
+          transition={{ duration: 200, repeat: Infinity, ease: "linear" }}
+          className="flex items-center gap-10 pr-10"
+        >
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="flex items-center gap-10">
+              <span className="text-white text-[14px] font-semibold uppercase tracking-[0.1em] flex items-center gap-10">
+                Finished a course <span className="opacity-50">◆</span> 
+                Built with AI <span className="opacity-50">◆</span> 
+                Changed careers <span className="opacity-50">◆</span> 
+                Learned a new skill <span className="opacity-50">◆</span> 
+                Shipped a project <span className="opacity-50">◆</span> 
+                Stayed consistent for 90 days <span className="opacity-50">◆</span> 
+                Built an app <span className="opacity-50">◆</span> 
+                Designed professionally <span className="opacity-50">◆</span> 
+                Started earning <span className="opacity-50">◆</span> 
+                Got something done <span className="opacity-50">◆</span> 
+                Showed up every day <span className="opacity-50">◆</span> 
+                Built the habit <span className="opacity-50">◆</span> 
+                Finished what they started <span className="opacity-50">◆</span> 
+                Made it to day 90 <span className="opacity-50">◆</span> 
+                Did the work
               </span>
-              <h2 className="text-3xl md:text-5xl font-bold mb-10 tracking-tight">
-                We are The Sprint Execution Hub.
-              </h2>
-              <div className="space-y-6 text-white/70 leading-relaxed">
+              <span className="text-white opacity-50">◆</span>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* SOCIAL PROOF SECTION */}
+      <section className="pt-[56px] pb-[56px] md:pt-[100px] md:pb-[100px] px-6 md:px-24 bg-brand-dark">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <SectionLabel>IT HAS WORKED BEFORE</SectionLabel>
+            <Headline className="text-[40px] md:text-[56px] mb-6">
+              {"This is what 90 days of\nreal accountability looks like."}
+            </Headline>
+            <p className="text-[18px] text-[#cccccc] font-normal">
+              From the Sprint Execution 2025 — last quarter. Real participants. Real reports. Real progress.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 mb-12">
+            {["1tsgWjcfGaiC-SJBYpAbg3-5zepcBSR-Y", "1LUPYlOR1p5CV2uyqeqdVI6FRVv5qXjjv"].map((driveId, idx) => (
+              <div key={idx} className="flex flex-col">
+                <span className="text-[11px] text-brand-blue font-medium uppercase tracking-[0.15em] mb-4">
+                  PARTICIPANT PROGRESS REPORT
+                </span>
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-[#1a1a1a] rounded-[12px] border border-brand-blue/30 hover:border-brand-blue/80 overflow-hidden shadow-xl"
+                >
+                   <img 
+                    src={getDriveThumbnail(driveId)} 
+                    alt={`Sprint Execution 2025 Progress Report ${idx + 1}`}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-auto block"
+                  />
+                </motion.div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center space-y-6">
+            <p className="text-[14px] text-[#777777] italic font-normal">
+              Names and personal details blurred to protect participant privacy.
+            </p>
+            <p className="text-[20px] font-bold text-white">
+              Your report could be here next quarter.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 5 — THE TWO PATHS */}
+      <section id="highlights" className="pt-[56px] pb-[56px] md:pt-[80px] md:pb-[80px] px-6 md:px-24 bg-[#161616]">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <SectionLabel>Two ways to Sprint</SectionLabel>
+            <motion.p 
+               initial={{ opacity: 0 }}
+               whileInView={{ opacity: 1 }}
+               viewport={{ once: true }}
+               transition={{ duration: 0.8 }}
+               className="mx-auto max-w-[640px] text-[20px] text-[#aaaaaa] italic"
+            >
+              "Everyone who joins The Sprint gets the same accountability environment, the same daily check-ins, and the same relentless standard. Where people differ is in how much direct involvement they want from us."
+            </motion.p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch pt-8">
+            {/* The Sprint Card */}
+            <motion.div 
+               initial={{ opacity: 0, x: -40 }}
+               whileInView={{ opacity: 1, x: 0 }}
+               viewport={{ once: true }}
+               transition={{ duration: 0.7 }}
+               className="bg-[#1e1e1e] p-8 md:p-12 relative overflow-hidden flex flex-col border-t-2 border-brand-blue h-full"
+            >
+              <div className="mb-10">
+                <span className="text-[10px] text-brand-blue font-medium uppercase tracking-[0.15em] mb-4 block">FOR THOSE WHO ARE READY TO GO</span>
+                <h3 className="text-3xl md:text-[32px] font-bold text-white leading-tight mb-8">
+                  You have a goal.<br />We make sure<br />you finish it.
+                </h3>
+                <div className="space-y-6 text-sm md:text-base mb-12">
+                  <p>
+                    You know what you want to work on. You just need an environment that makes quitting feel wrong. Daily check-ins, real people, and a team that notices when you go quiet.
+                  </p>
+                  <p>
+                    Monday to Friday. 90 days. No excuses accepted.
+                  </p>
+
+                  <ul className="space-y-4 pt-4">
+                    {[
+                      "You join the Sprint group immediately after payment",
+                      "Every Monday to Friday, you show up and do meaningful work",
+                      "At the end of each day, you post your report — what you worked on and what you achieved",
+                      "The team reviews every report and responds — no one goes unnoticed",
+                      "Participants who go quiet get called out — the standard is kept high for everyone",
+                      "At the end of 90 days, you will have a body of work, a finished goal, or a skill you actually used"
+                    ].map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-3 text-[15px] text-white leading-[1.8]">
+                        <span className="text-brand-blue font-bold mt-[-2px]">—</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <p className="text-[13px] text-[#999999] italic mt-4">
+                    "No average tasks. No half-effort. This is the real thing."
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-auto">
+                <div className="pt-8 border-t border-white/10 mb-8">
+                  <p className="text-white font-semibold mb-1">Commitment fee — Pay what you have</p>
+                  <p className="text-[13px] text-white/30 font-normal">Suggested: ₦2,000 · ₦5,000 · ₦10,000 · ₦50,000</p>
+                </div>
+                <button onClick={scrollToApply} className="btn-editorial-outline w-full group">
+                  Join The Sprint
+                  <ArrowRight className="inline-block ml-3 group-hover:translate-x-1 transition-transform" size={18} />
+                </button>
+              </div>
+            </motion.div>
+
+            {/* The Builder's Track Card */}
+            <motion.div 
+               initial={{ opacity: 0, x: 40 }}
+               whileInView={{ opacity: 1, x: 0 }}
+               viewport={{ once: true }}
+               transition={{ duration: 0.7 }}
+               className="bg-[#1a1f3a] p-8 md:p-12 relative overflow-hidden flex flex-col border-t-[3px] border-brand-blue h-full"
+            >
+              <div className="mb-10">
+                <span className="text-[10px] text-brand-blue font-medium uppercase tracking-[0.15em] mb-4 block">FOR THOSE WHO WANT MORE THAN ACCOUNTABILITY</span>
+                <h3 className="text-3xl md:text-[32px] font-bold text-white leading-tight mb-8">
+                  You want someone<br />in your corner<br />for all 90 days.
+                </h3>
+                <div className="space-y-6 text-sm md:text-base mb-12 font-normal">
+                  <p>
+                    Some people don't just need accountability — they need direction. A clear roadmap. Someone who will work with them directly, build the path, and stay close until it's done.
+                  </p>
+                  <p>
+                    This is that. And it goes further.
+                  </p>
+                  
+                  <ul className="space-y-4">
+                    {[
+                      "A personal roadmap session with Adebayo Kareem built around your exact goals",
+                      "A learning curriculum matched to where you want to go",
+                      "Direct access to Adebayo as he builds with AI live — you watch, learn, and build alongside him in real time",
+                      "Access to the AI in 2026 Bootcamp (currently in development)",
+                      "Access to the Advanced AI Flyer Design Course with real samples of what you will learn to create",
+                      "Recommended tools, courses, and resources tailored to your specific path",
+                      "Priority guidance from the team throughout all 90 days"
+                    ].map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-3 text-[15px] text-white leading-[1.8]">
+                        <span className="text-brand-blue font-bold mt-[-2px]">—</span>
+                        <span>
+                          {item.includes("real samples of what you will learn to create") ? (
+                            <>
+                              {item.split("real samples of what you will learn to create")[0]}
+                              <a href={SAMPLE_WORK_LINK} className="text-brand-blue hover:underline">
+                                real samples of what you will learn to create
+                              </a>
+                              {item.split("real samples of what you will learn to create")[1]}
+                            </>
+                          ) : item}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <p>
+                    Our goal is simple — by the time these 90 days are over, you will either have a skill that can pay you, a habit that grows your income, or a project that opens the next door. We are not here to just hold you accountable. We are here to make sure something changes.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-auto">
+                <div className="pt-8 border-t border-white/10 mb-8">
+                  <p className="text-white font-semibold mb-1">Commitment fee — ₦15,000</p>
+                  <p className="text-[13px] text-white/30">Everything in The Sprint, plus direct involvement from the team</p>
+                </div>
+                <button onClick={scrollToApply} className="btn-editorial-pill w-full shimmer-effect group">
+                  Join The Builder's Track
+                  <ArrowRight className="inline-block ml-3 group-hover:translate-x-1 transition-transform" size={18} />
+                </button>
+              </div>
+            </motion.div>
+          </div>
+
+          <p className="text-center text-sm text-white/30 mt-12">
+            Not sure which is right for you? Apply through either — we'll talk it through.
+          </p>
+        </div>
+      </section>
+
+      {/* SECTION 6 — THE STORY */}
+      <section className="pt-[56px] pb-[56px] md:pt-[80px] md:pb-[80px] px-6 md:px-24 bg-brand-dark">
+        <div className="max-w-4xl mx-auto">
+          <SectionLabel>Why we charge for this</SectionLabel>
+          <Headline className="mb-10 text-[52px]">
+            {"We ran the first Sprint free.\nHere is what we learned."}
+          </Headline>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-start mb-24">
+            <div className="space-y-8">
+              <p>
+                The first edition of The Sprint Execution was completely free. We wanted to prove something — that with the right system, the right environment, and the right level of accountability, people can get extraordinary things done. And they did.
+              </p>
+              <p>
+                But free also attracted the wrong energy. People who weren&apos;t ready. People who joined but didn&apos;t show up. And that hurt the ones who were serious.
+              </p>
+            </div>
+            <div className="space-y-8">
+              <p>
+                We wrestled with making this paid. Honestly, it wasn&apos;t an easy decision. But we realized: a commitment fee isn&apos;t about the money. It&apos;s a filter. It signals that you&apos;re choosing to be here — that you&apos;re not just curious, you&apos;re ready.
+              </p>
+            </div>
+          </div>
+
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center"
+          >
+            <p className="text-[28px] md:text-[36px] italic font-normal text-white leading-[1.5] max-w-[680px] mx-auto mb-6">
+              "'This isn't the price of what you'll receive. It's proof that you're ready for it.'"
+            </p>
+            <span className="text-sm text-white/30 uppercase tracking-[0.15em]">— The Sprint Execution Hub</span>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* SECTION 7 — THE TEAM */}
+      <section id="about" className="pt-[56px] pb-[56px] md:pt-[80px] md:pb-[80px] px-6 md:px-24 bg-[#161616]">
+        <div className="max-w-7xl mx-auto">
+          <SectionLabel>Who we are</SectionLabel>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-24 items-center">
+            <div>
+              <Headline className="mb-12 text-[48px]">
+                {"We built the environment\nwe wish we'd had."}
+              </Headline>
+              <div className="space-y-8 max-w-2xl">
                 <p>
-                  We're a small, focused team that believes execution is a skill — one that can be built, practiced, and refined. We built The Sprint Execution because we kept seeing the same pattern: smart, capable people with real goals, stuck in a loop of starting and stopping.
+                  The Sprint Execution Hub is a small, focused team with one obsession: helping people finish things. Not start things. Finish them. We have watched too many capable people with real goals get swallowed by the gap between intention and execution.
                 </p>
                 <p>
-                  We don't sell motivation. We don't do hype. We build environments where getting things done is the norm — where accountability is real, the standard is high, and the support is genuine.
+                  We don't sell motivation. We don't do hype. We build environments where showing up every day is the norm — where the people around you make drift feel strange.
                 </p>
                 <p>
-                  Our Lead Executor, Adebayo Kareem, brings this system to life each cohort. He's not just managing a challenge — he's executing alongside every participant, reviewing reports, setting the tone, and showing up daily. The team is built around his approach: direct, supportive, and relentlessly focused on results.
-                </p>
-                <p>
-                  We've done this before. We've seen what happens when the right people get into the right environment. This is that environment.
+                  Adebayo Kareem currently serves as our Lead Executor. He runs each cohort directly — reviewing reports, setting the tone, and showing up in the group every single day. His approach is the approach: direct, warm, and relentlessly focused on what you actually achieve.
                 </p>
               </div>
             </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="bg-brand-dark-card border border-brand-blue/20 p-6 md:p-10 rounded-3xl text-center flex flex-col items-center"
+            <motion.div 
+               initial={{ opacity: 0 }}
+               whileInView={{ opacity: 1 }}
+               viewport={{ once: true }}
+               transition={{ duration: 1 }}
+               className="flex flex-col items-center lg:items-start text-center lg:text-left"
             >
-              <div className="w-32 h-32 md:w-48 md:h-48 rounded-2xl overflow-hidden mb-8 border-2 border-brand-blue/30 shadow-2xl skew-x-1">
+              <div className="w-60 h-60 rounded-full mb-8 relative overflow-hidden group border-2 border-brand-blue/20">
                 <img 
                   src={getDriveThumbnail("15qQlcwu7kLbFMr3-_tLy_JtLbCK9rmAE")} 
                   alt="Adebayo Kareem" 
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover"
-                  loading="lazy"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
               </div>
-              <h3 className="text-2xl font-bold mb-1">Adebayo Kareem</h3>
-              <p className="text-white/60 mb-8 font-medium">Lead Executor, The Sprint Execution Hub</p>
-              <div className="h-px bg-white/5 w-full mb-8" />
-              <p className="text-white/30 text-xs font-medium tracking-wide uppercase px-4">Currently serving Cohort 1.0 — 2026</p>
+              <h3 className="text-[20px] font-bold text-white">Adebayo Kareem</h3>
+              <p className="text-brand-blue text-sm mb-1 uppercase tracking-wider font-medium">Lead Executor</p>
+              <p className="text-[13px] text-white/30 mb-8 uppercase tracking-[0.1em] font-normal">Serving Cohort 1.0 — 2026</p>
+              
+              <div className="bg-[#1e1e1e] p-6 rounded-xl border-l-[3px] border-brand-blue italic text-white/90 text-sm leading-relaxed max-w-xs transition-transform hover:scale-[1.02] font-normal">
+                "My job is to make sure that when this is over, you have something real to show for it."
+              </div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Highlights Section */}
-      <section id="highlights" className="py-24 px-6 bg-brand-dark">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20">
-            <span className="text-brand-blue text-xs font-bold tracking-[0.3em] uppercase block mb-4">
-              Cohort Highlights
-            </span>
-            <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
-              Proof of Execution. <br className="hidden md:block" /> Results from our previous Sprint.
-            </h2>
+      {/* SECTION 8 — REGISTRATION FORM */}
+      <section id="apply" className="pt-[56px] pb-[56px] md:pt-[80px] md:pb-[80px] px-6 md:px-24 bg-brand-dark relative">
+        <div className="absolute inset-0 diagonal-grid opacity-20 pointer-events-none" />
+        <div className="max-w-[780px] mx-auto relative z-10">
+          <div className="text-center mb-16">
+            <SectionLabel>Apply Now</SectionLabel>
+            <Headline className="text-center text-[48px] md:text-[64px] mb-6">
+              {"Your 90 days\nstart here."}
+            </Headline>
+            <p className="text-xl text-white/40">50 spots. First come, first committed.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-            {DRIVE_HIGHLIGHTS.slice(0, 4).map((id, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: (i % 2) * 0.2 }}
-                className="w-full aspect-video bg-brand-dark-card border border-white/5 rounded-3xl overflow-hidden hover:border-brand-blue/30 transition-all group cursor-pointer shadow-2xl relative"
-              >
-                <img
-                  src={id.startsWith('FILE_ID') 
-                    ? `https://picsum.photos/seed/sprint-exc-${i}/800/450` 
-                    : getDriveThumbnail(id)
-                  }
-                  alt={`Cohort Highlight ${i + 1}`}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
-                  loading="lazy"
-                />
-              </motion.div>
-            ))}
-          </div>
-          
-          <div className="mt-32 text-center">
-            <p className="text-white/40 italic text-sm">This is what happens when you stop planning and start executing.</p>
+          <div className="bg-[#1c1c1c] border border-brand-blue/20 rounded-[2rem] shadow-3xl">
+            <RegistrationForm />
           </div>
         </div>
       </section>
 
-      {/* Form Section */}
-      <RegistrationForm />
-
-      {/* Footer */}
-      <footer className="bg-[#111111] py-16 px-6">
+      {/* SECTION 9 — FOOTER */}
+      <footer className="py-20 px-6 md:px-24 bg-[#0f0f0f] border-t border-white/5">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-12 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-16 items-start">
             <div>
-              <div className="font-bold text-2xl mb-2">The Sprint Execution Hub</div>
-              <p className="text-white/40 italic font-light tracking-wide">Execute. Repeat. Become.</p>
+              <p className="text-white font-bold text-lg mb-2">The Sprint Execution Hub</p>
+              <p className="text-white/40 text-sm italic">Execute. Repeat. Become.</p>
             </div>
-            
-            <div className="flex gap-8 text-sm font-medium text-white/60">
-              <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-white transition-colors">Contact</a>
+            <div className="text-center md:text-sm text-white/30 hidden md:block">
+              © 2026 The Sprint Execution Hub.<br />
+              Lead Executor: Adebayo Kareem.
+            </div>
+            <div className="flex justify-end gap-x-8 text-sm text-white/40 font-medium">
+              <a href="#" className="hover:text-brand-blue transition-colors text-[13px] uppercase tracking-wider">Privacy Policy</a>
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-brand-blue transition-colors text-[13px] uppercase tracking-wider">Contact</a>
             </div>
           </div>
-          
-          <div className="h-px bg-white/5 mb-12" />
-          
-          <div className="flex flex-col md:flex-row justify-center items-center text-[10px] md:text-xs text-white/30 uppercase tracking-[0.2em] font-medium text-center">
-            <span>© 2026 The Sprint Execution Hub. All rights reserved. Lead Executor: Adebayo Kareem.</span>
+          <div className="mt-12 pt-8 border-t border-white/5 text-center md:hidden text-[10px] text-white/20 uppercase tracking-widest">
+            © 2026 The Sprint Execution Hub. Lead Executor: Adebayo Kareem.
           </div>
         </div>
       </footer>
-    </>
+      </div>
+    </main>
   );
 }
 
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-brand-dark overflow-x-hidden">
+      <div className="min-h-screen bg-brand-dark overflow-x-hidden selection:bg-brand-blue selection:text-white">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/success" element={<Success />} />

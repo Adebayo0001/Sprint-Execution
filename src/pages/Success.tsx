@@ -3,19 +3,47 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { CheckCircle2, MessageSquare, Share2, ArrowLeft, Users, ShieldCheck } from 'lucide-react';
-import { WHATSAPP_GROUP_EXECUTORS, WHATSAPP_GROUP_SUPPORT } from '../constants';
+import { WHATSAPP_GROUP_EXECUTORS, WHATSAPP_GROUP_SUPPORT, WHATSAPP_CONTACT_LINK } from '../constants';
+import { sendConfirmationEmail } from '../lib/email';
 
 export default function Success() {
   const [searchParams] = useSearchParams();
   const tier = searchParams.get('tier');
+  const trackParam = searchParams.get('track');
   const rawName = searchParams.get('name') || 'Executor';
   const name = rawName.trim().split(' ')[0];
+  const emailSentRef = useRef(false);
 
-  const isTeamSupport = tier === 'group_plus_support' || tier === 'Support';
+  const isTeamSupport = tier === 'group_plus_support' || tier === 'Support' || trackParam === 'builders';
+
+  useEffect(() => {
+    if (emailSentRef.current) return;
+    emailSentRef.current = true;
+
+    const initOnboarding = async () => {
+      try {
+        const applicantData = localStorage.getItem('sprint_applicant');
+        if (!applicantData) return;
+
+        const applicant = JSON.parse(applicantData);
+        // Identify track: prefer param, fallback to tier mapping
+        const track = (trackParam === 'sprint' || trackParam === 'builders') 
+          ? (trackParam as 'sprint' | 'builders')
+          : (isTeamSupport ? 'builders' : 'sprint');
+
+        await sendConfirmationEmail(applicant, track);
+      } catch (err) {
+        // Failed email must never prevent the success page from loading
+        console.error("Non-blocking error in initOnboarding:", err);
+      }
+    };
+
+    initOnboarding();
+  }, [trackParam, isTeamSupport]);
 
   const shareApp = () => {
     const text = `I just joined The Sprint Execution 2026. Only 50 spots available for this cohort. Secure yours here: ${window.location.origin}`;
@@ -26,7 +54,7 @@ export default function Success() {
         url: window.location.origin,
       });
     } else {
-      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+      window.open(`${WHATSAPP_CONTACT_LINK}?text=${encodeURIComponent(text)}`, '_blank');
     }
   };
 
@@ -52,10 +80,10 @@ export default function Success() {
           <CheckCircle2 size={40} className="text-green-500" />
         </motion.div>
 
-        <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">
+        <h1 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight leading-[1.1]">
           Welcome to the Cohort, {name}!
         </h1>
-        <p className="text-white/60 mb-10 leading-relaxed">
+        <p className="text-white/60 mb-10 leading-relaxed font-normal">
           Your commitment has been recorded. You are now part of the 50 executors for Cohort 1.0. 
           Follow the steps below to finalize your onboarding.
         </p>
@@ -68,13 +96,13 @@ export default function Success() {
                  <Users className="text-brand-blue" size={20} />
                </div>
                <div className="flex-1">
-                 <h3 className="font-bold text-lg mb-1">Step 1: Join Sprint Executors</h3>
-                 <p className="text-xs text-white/50 mb-4">The main accountability hub where everything happens.</p>
+                 <h3 className="font-bold text-lg mb-1 leading-tight">Step 1: Join Sprint Executors</h3>
+                 <p className="text-xs text-white/50 mb-4 font-normal">The main accountability hub where everything happens.</p>
                  <a 
                    href={WHATSAPP_GROUP_EXECUTORS}
                    target="_blank"
                    rel="noopener noreferrer"
-                   className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl transition-all text-sm"
+                   className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl transition-all text-sm"
                  >
                    Join Sprint Executors <MessageSquare size={16} />
                  </a>
@@ -94,13 +122,13 @@ export default function Success() {
                    <ShieldCheck className="text-white" size={20} />
                  </div>
                  <div className="flex-1">
-                   <h3 className="font-bold text-lg mb-1">Step 2: Join Support Link</h3>
-                   <p className="text-xs text-white/70 mb-4 font-medium uppercase tracking-wider italic">Exclusive for Team Support Tier</p>
+                   <h3 className="font-bold text-lg mb-1 leading-tight">Step 2: Join Support Link</h3>
+                   <p className="text-xs text-white/70 mb-4 font-medium uppercase tracking-[0.15em] italic">Exclusive for Team Support Tier</p>
                    <a 
                      href={WHATSAPP_GROUP_SUPPORT}
                      target="_blank"
                      rel="noopener noreferrer"
-                     className="inline-flex items-center gap-2 bg-white text-brand-dark font-bold py-3 px-6 rounded-xl transition-all text-sm"
+                     className="inline-flex items-center gap-2 bg-white text-brand-dark font-semibold py-3 px-6 rounded-xl transition-all text-sm"
                    >
                      Join Support Portal <MessageSquare size={16} />
                    </a>
@@ -111,10 +139,10 @@ export default function Success() {
 
           {/* Step 3: Refer */}
           <div className="pt-6 border-t border-white/5">
-            <h4 className="font-bold text-sm mb-4 text-center text-white/40 uppercase tracking-widest">Help someone else execute</h4>
+            <h4 className="font-medium text-[11px] mb-4 text-center text-white/40 uppercase tracking-[0.15em]">Help someone else execute</h4>
             <button 
               onClick={shareApp}
-              className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold py-4 px-8 rounded-2xl transition-all flex items-center justify-center gap-2 group"
+              className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold py-4 px-8 rounded-2xl transition-all flex items-center justify-center gap-2 group"
             >
               Spread the word <Share2 size={18} className="group-hover:scale-110 transition-transform" />
             </button>
@@ -122,13 +150,13 @@ export default function Success() {
         </div>
 
         <div className="mt-12">
-          <Link to="/" className="text-white/40 hover:text-brand-blue transition-colors text-sm flex items-center justify-center gap-2">
+          <Link to="/" className="text-white/40 hover:text-brand-blue transition-colors text-sm flex items-center justify-center gap-2 font-normal">
             <ArrowLeft size={14} /> Back to Homepage
           </Link>
         </div>
       </motion.div>
 
-      <div className="mt-12 text-center text-white/20 text-[10px] uppercase tracking-[0.3em] font-bold">
+      <div className="mt-12 text-center text-white/20 text-[10px] uppercase tracking-[0.15em] font-medium">
         Sprint Execution Hub — Cohort 1.0 — 2026
       </div>
     </div>
