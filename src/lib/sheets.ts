@@ -20,7 +20,7 @@ interface SheetsPayload {
  * Uses 'text/plain' Content-Type to satisfy 'no-cors' requirements.
  */
 export async function sendToGoogleSheets(payload: SheetsPayload) {
-  const webhookUrl = import.meta.env.VITE_SHEETS_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbwW8N0R03vxk8xROYPhRUs3w77bwcTojD8s_r2g4ONLNfeVUIN9WxurTt_RocmbpT_r/exec";
+  const webhookUrl = import.meta.env.VITE_SHEETS_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbzerl5IC56jzv68c2QJIIXaYxXlmA5obP_FTQE0eUIGJmSyYN-BrUXiUAgtZ-e8ddfW5A/exec";
   
   if (!webhookUrl) {
     console.warn("VITE_SHEETS_WEBHOOK_URL is not set. Skipping Sheets sync.");
