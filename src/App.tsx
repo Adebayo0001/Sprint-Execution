@@ -9,9 +9,10 @@ import { X, ArrowRight, Check, Users, ExternalLink } from 'lucide-react';
 import { doc, onSnapshot, collection, query, orderBy, limit } from 'firebase/firestore';
 import { db } from './lib/firebase';
 import RegistrationForm from './components/RegistrationForm';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import Success from './pages/Success';
 import AdminSync from './pages/AdminSync';
+import Compare from './pages/Compare';
 import AdminSyncButton from './components/AdminSyncButton';
 import ExitIntentPopup from './components/ExitIntentPopup';
 import { SUPPORT_EMAIL, SAMPLE_WORK_LINK, getDriveThumbnail } from './constants';
@@ -212,6 +213,13 @@ const Navbar = () => {
             {item.label}
           </button>
         ))}
+
+        <Link 
+          to="/compare" 
+          className="text-[13px] uppercase tracking-widest text-white/60 hover:text-brand-blue font-medium transition-colors"
+        >
+          Compare Paths
+        </Link>
         
         <button
           onClick={() => scrollToSection('apply')}
@@ -850,6 +858,12 @@ function Home() {
               </div>
             </motion.div>
           </div>
+
+          <div className="mt-12 text-center">
+            <Link to="/compare" className="text-[#555555] hover:text-white text-[13px] font-medium transition-colors inline-flex items-center gap-2">
+              See a full comparison of both paths →
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -997,6 +1011,7 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/success" element={<Success />} />
           <Route path="/admin/sync" element={<AdminSync />} />
+          <Route path="/compare" element={<Compare />} />
         </Routes>
       </div>
     </BrowserRouter>
