@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Loader2, Database, CheckCircle } from 'lucide-react';
+import { sendToGoogleSheets } from '../lib/sheets';
 
 export default function AdminSyncButton() {
   const [searchParams] = useSearchParams();
@@ -29,24 +30,14 @@ export default function AdminSyncButton() {
       
       const syncPromises = querySnapshot.docs.map(async (doc) => {
         const data = doc.data();
-        try {
-          return await fetch(webhookUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              full_name: data.full_name,
-              email: data.email,
-              whatsapp: data.whatsapp,
-              goal: data.goal,
-              support_level: data.support_level === 'group_plus_support' ? "The Builder's Track" : "The Sprint",
-              referred_by: data.referral_source || ''
-            }),
-          });
-        } catch (err) {
-          console.error(`Failed to sync doc ${doc.id}:`, err);
-          return null;
-        }
+        return await sendToGoogleSheets({
+          full_name: data.full_name,
+          email: data.email,
+          whatsapp: data.whatsapp,
+          goal: data.goal,
+          support_level: data.support_level === 'group_plus_support' ? "The Builder's Track" : "The Sprint",
+          referred_by: data.referral_source || ''
+        });
       });
 
       await Promise.all(syncPromises);

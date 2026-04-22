@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Loader2, CheckCircle2, AlertCircle, Send } from 'lucide-react';
+import { sendToGoogleSheets } from '../lib/sheets';
 
 export default function AdminSync() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -28,26 +29,17 @@ export default function AdminSync() {
       for (const doc of querySnapshot.docs) {
         const data = doc.data();
         
-        try {
-          await fetch(webhookUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              full_name: data.full_name,
-              email: data.email,
-              whatsapp: data.whatsapp,
-              goal: data.goal,
-              support_level: data.support_level === 'group_plus_support' ? "The Builder's Track" : "The Sprint",
-              referred_by: data.referral_source || ''
-            }),
-          });
-          
-          count++;
-          setProgress({ current: count, total });
-        } catch (postErr) {
-          console.error(`Failed to sync doc ${doc.id}:`, postErr);
-        }
+        await sendToGoogleSheets({
+          full_name: data.full_name,
+          email: data.email,
+          whatsapp: data.whatsapp,
+          goal: data.goal,
+          support_level: data.support_level === 'group_plus_support' ? "The Builder's Track" : "The Sprint",
+          referred_by: data.referral_source || ''
+        });
+        
+        count++;
+        setProgress({ current: count, total });
       }
 
       setStatus('success');

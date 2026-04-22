@@ -7,9 +7,10 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { Check, Loader2, Send, ExternalLink, X, Users, ArrowRight } from 'lucide-react';
-import { collection, serverTimestamp, onSnapshot, doc, runTransaction, increment } from 'firebase/firestore';
+import { collection, serverTimestamp, onSnapshot, doc, runTransaction, increment, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { PAYSTACK_LINK_SPRINT, PAYSTACK_LINK_BUILDERS, SELAR_LINK, WHATSAPP_NUMBER, WHATSAPP_CONTACT_LINK } from '../constants';
+import { sendToGoogleSheets } from '../lib/sheets';
 
 interface FormData {
   full_name: string;
@@ -51,7 +52,17 @@ export default function RegistrationForm() {
         setParticipantCount(0);
       }
     });
-    return () => unsubscribe();
+
+    const handleSelectSprint = () => {
+      handleSupportSelect('group_only');
+    };
+
+    window.addEventListener('select_sprint_option', handleSelectSprint);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('select_sprint_option', handleSelectSprint);
+    };
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -61,6 +72,29 @@ export default function RegistrationForm() {
 
   const handleSupportSelect = (level: 'group_only' | 'group_plus_support') => {
     setFormData(prev => ({ ...prev, support_level: level }));
+  };
+
+  const handleEmailBlur = async () => {
+    if (!formData.email || !formData.email.includes('@')) return;
+    
+    try {
+      const partialRef = doc(db, 'partial_leads', formData.email.toLowerCase());
+      await setDoc(partialRef, {
+        email: formData.email.toLowerCase(),
+        timestamp: serverTimestamp(),
+        page_url: window.location.href,
+        status: 'started_form'
+      }, { merge: true });
+
+      sendToGoogleSheets({
+        email: formData.email.toLowerCase(),
+        status: 'started_form',
+        sheet: 'partial',
+        source: 'registration_form'
+      });
+    } catch (err) {
+      console.error("Partial lead error:", err);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,27 +138,23 @@ export default function RegistrationForm() {
         }
       });
 
-      const sheetUrl = import.meta.env.VITE_SHEETS_WEBHOOK_URL;
-      if (sheetUrl) {
-        try {
-          // Non-blocking fire-and-forget sync to Google Sheets
-          fetch(sheetUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              full_name: formData.full_name,
-              email: formData.email,
-              whatsapp: formData.whatsapp,
-              goal: formData.goal,
-              support_level: formData.support_level === 'group_plus_support' ? "The Builder's Track" : "The Sprint",
-              referred_by: localStorage.getItem('referral_source') || ''
-            }),
-          }).catch(e => console.warn("Fetch error for Sheets:", e));
-        } catch (sheetErr) {
-          console.warn("Google Sheet sync setup failed:", sheetErr);
-        }
+      // Update partial lead status to completed
+      try {
+        const partialRef = doc(db, 'partial_leads', formData.email.toLowerCase());
+        await setDoc(partialRef, { status: 'completed' }, { merge: true });
+      } catch (e) {
+        console.warn("Failed to update partial lead status:", e);
       }
+
+      // Non-blocking fire-and-forget sync to Google Sheets
+      sendToGoogleSheets({
+        full_name: formData.full_name,
+        email: formData.email,
+        whatsapp: formData.whatsapp,
+        goal: formData.goal,
+        support_level: formData.support_level === 'group_plus_support' ? "The Builder's Track" : "The Sprint",
+        referred_by: localStorage.getItem('referral_source') || ''
+      });
 
       const finalData = { ...formData };
       setSubmittedData(finalData);
@@ -171,6 +201,7 @@ export default function RegistrationForm() {
               className="w-full bg-brand-dark border border-white/10 rounded-lg p-5 text-white focus:outline-none focus:border-brand-blue transition-colors text-base"
               value={formData.email}
               onChange={handleChange}
+              onBlur={handleEmailBlur}
             />
           </div>
 

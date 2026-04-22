@@ -30,6 +30,11 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    match /partial_leads/{email} {
+      allow get, create, update: if true;
+      allow list, delete: if false;
+    }
+
     match /public_feed/{feedId} {
       allow read, create: if true;
     }

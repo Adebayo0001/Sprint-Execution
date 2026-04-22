@@ -38,12 +38,29 @@
         "count": { "type": "integer", "description": "Total number of participants" }
       },
       "required": ["count"]
+    },
+    "PartialLead": {
+      "title": "Partial Lead",
+      "description": "Captured early or on exit to follow up later.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["started_form", "exit_intent", "completed"] },
+        "page_url": { "type": "string" },
+        "source": { "type": "string" }
+      },
+      "required": ["email", "timestamp", "status"]
     }
   },
   "firestore": {
     "sprint_leads/{leadId}": {
       "schema": "Lead",
       "description": "Submissions from the registration form."
+    },
+    "partial_leads/{email}": {
+      "schema": "PartialLead",
+      "description": "Captured early or on exit intent."
     },
     "global_stats/{statId}": {
       "schema": "GlobalStats",
