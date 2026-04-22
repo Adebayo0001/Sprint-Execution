@@ -732,7 +732,7 @@ function Home() {
                 </h3>
                 <div className="space-y-8 text-[17px] text-[#cccccc] leading-[1.8] max-w-4xl mb-12 font-normal">
                   <p>
-                    This is the foundation. Everyone starts here. You pay what genuinely reflects your commitment right now — ₦1,000, ₦2,000, ₦5,000. No fixed price. No pressure.
+                    This is the foundation. Everyone starts here. You pay what genuinely reflects your commitment right now — ₦2,000, ₦5,000, ₦10,000. No fixed price. No pressure.
                   </p>
 
                   <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 pt-4 border-t border-white/5 mt-8">
@@ -760,7 +760,7 @@ function Home() {
               <div className="mt-auto flex flex-col md:flex-row md:items-center justify-between gap-8 pt-8 border-t border-white/10">
                 <div>
                   <p className="text-white text-[16px] font-semibold mb-1 uppercase tracking-wider">Pay what you have</p>
-                  <p className="text-[13px] text-[#777777] font-normal">Suggested: ₦1,000 · ₦2,000 · ₦5,000</p>
+                  <p className="text-[13px] text-[#777777] font-normal">Suggested: ₦2,000 · ₦5,000 · ₦10,000 · ₦50,000</p>
                 </div>
                 <button 
                   onClick={scrollToApply} 
@@ -783,13 +783,14 @@ function Home() {
                initial={{ opacity: 0, y: 20 }}
                whileInView={{ opacity: 1, y: 0 }}
                viewport={{ once: true }}
-               transition={{ duration: 0.7, delay: 0.2 }}
-               className="bg-[#161a2e] p-8 md:p-12 relative overflow-hidden flex flex-col border-t-2 border-[#4f66fd]/60 w-full max-w-[680px] mx-auto rounded-xl shadow-2xl"
+               whileHover={{ scale: 1.01 }}
+               transition={{ duration: 0.4, ease: "easeOut" }}
+               className="bg-[#161a2e] p-8 md:p-12 relative overflow-hidden flex flex-col border-t-2 border-brand-blue/30 hover:border-brand-blue/40 hover:shadow-[0_0_30px_rgba(79,102,253,0.2)] w-full max-w-[680px] mx-auto rounded-xl shadow-2xl transition-all duration-400 ease-in-out"
             >
               <div className="mb-10">
                 <span className="text-[#4f66fd] uppercase text-[11px] font-bold tracking-[0.2em] mb-4 block">THE BUILDER'S TRACK</span>
-                <h3 className="text-3xl md:text-[32px] font-bold text-white leading-tight mb-8">
-                  You want someone<br />in your corner<br />for all 90 days.
+                <h3 className="text-3xl md:text-[32px] font-bold text-white leading-tight mb-8 text-center px-4">
+                  Do you Want more than Accountability?
                 </h3>
                 <div className="space-y-6 text-sm md:text-base text-[#aaaaaa] mb-12 font-normal leading-relaxed">
                   <p>
@@ -842,7 +843,7 @@ function Home() {
                 </div>
                 <button 
                   onClick={scrollToApply} 
-                  className="w-full bg-[#4f66fd] hover:bg-[#3d51d4] text-white font-bold py-4 rounded-full flex items-center justify-center gap-2 transition-all shimmer-effect"
+                  className="w-full bg-[#4f66fd] hover:bg-[#3d51d4] text-white font-bold py-4 rounded-full flex items-center justify-center gap-2 transition-all duration-400 ease-in-out shimmer-effect"
                 >
                   Join The Builder's Track <ArrowRight size={18} />
                 </button>

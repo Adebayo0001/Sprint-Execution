@@ -395,10 +395,9 @@ export default function RegistrationForm() {
                   href={getWhatsAppLink() || WHATSAPP_CONTACT_LINK} 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  onClick={() => localStorage.setItem('sprint_applicant', JSON.stringify(formData))}
-                  className="w-full bg-[#25D366] text-white font-bold py-4 rounded-full flex items-center justify-center gap-2 hover:brightness-110 shadow-lg shadow-green-600/20"
+                  className="text-brand-blue hover:underline text-[13px] font-medium leading-relaxed"
                 >
-                  I've Paid — Notify Team <ArrowRight size={18} />
+                  Have issues with payment or make a direct transfer? Reach out on WhatsApp
                 </a>
               </div>
               <p className="mt-8 text-[11px] text-white/30">Your payment confirms your place. Group links follow within 24 hours.</p>
