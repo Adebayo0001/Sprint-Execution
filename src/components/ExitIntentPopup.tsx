@@ -11,47 +11,105 @@ export default function ExitIntentPopup() {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const hasSeen = sessionStorage.getItem('exit_intent_shown');
-    const hasSubmitted = localStorage.getItem('sprint_applicant');
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    const hasSeen = sessionStorage.getItem('exit_popup_shown');
+    const hasSubmitted = sessionStorage.getItem('form_submitted') || localStorage.getItem('sprint_applicant');
     
     if (hasSeen || hasSubmitted) return;
 
-    const handleDesktopTrigger = (e: MouseEvent) => {
-      if (e.clientY <= 10) {
-        triggerPopup();
-      }
-    };
+    let cleanupFunctions: (() => void)[] = [];
 
-    const handleMobileTrigger = () => {
-      triggerPopup();
-    };
+    // Delay initialization for 10 seconds
+    const initTimeout = setTimeout(() => {
+      // Desktop: mouseout
+      const handleDesktopTrigger = (e: MouseEvent) => {
+        if (!isMobile && e.clientY <= 10) {
+          triggerPopup();
+        }
+      };
 
-    const triggerPopup = () => {
-      const highlightsSection = document.getElementById('highlights');
-      const pricingTop = highlightsSection?.offsetTop || 2000; // Fallback to a reasonable scroll depth
-      const scrollY = window.scrollY;
+      // Mobile Velocity Detection
+      let lastScrollY = window.scrollY;
+      let lastScrollTime = Date.now();
+      const handleMobileScroll = () => {
+        if (!isMobile) return;
+        
+        const currentScrollY = window.scrollY;
+        const currentTime = Date.now();
+        const scrollDiff = lastScrollY - currentScrollY;
+        const timeDiff = currentTime - lastScrollTime;
 
-      if (scrollY < pricingTop) {
-        setActivePopup('options');
-      } else {
-        setActivePopup('builder');
-      }
+        const scrollThreshold = document.documentElement.scrollHeight * 0.3;
+        
+        if (currentScrollY > scrollThreshold && scrollDiff > 50 && timeDiff < 300) {
+          triggerPopup();
+        }
 
-      setIsVisible(true);
-      sessionStorage.setItem('exit_intent_shown', 'true');
-    };
+        lastScrollY = currentScrollY;
+        lastScrollTime = currentTime;
+      };
 
-    window.addEventListener('mouseout', handleDesktopTrigger);
-    window.addEventListener('popstate', handleMobileTrigger);
-    window.history.pushState({ entry: true }, '');
+      // Idle Detection
+      let idleTimer: NodeJS.Timeout;
+      const resetIdleTimer = () => {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+          triggerPopup();
+        }, 25000);
+      };
+
+      const triggerPopup = () => {
+        const highlightsSection = document.getElementById('highlights');
+        const pricingTop = highlightsSection?.offsetTop || 2000;
+        const scrollY = window.scrollY;
+
+        if (scrollY < pricingTop) {
+          setActivePopup('options');
+        } else {
+          setActivePopup('builder');
+        }
+
+        setIsVisible(true);
+        sessionStorage.setItem('exit_popup_shown', 'true');
+        
+        // Comprehensive cleanup
+        cleanupAll();
+      };
+
+      const cleanupAll = () => {
+        window.removeEventListener('mouseout', handleDesktopTrigger);
+        window.removeEventListener('scroll', handleMobileScroll);
+        window.removeEventListener('scroll', resetIdleTimer);
+        window.removeEventListener('touchstart', resetIdleTimer);
+        window.removeEventListener('click', resetIdleTimer);
+        window.removeEventListener('popstate', triggerPopup);
+        clearTimeout(idleTimer);
+      };
+
+      window.addEventListener('mouseout', handleDesktopTrigger);
+      window.addEventListener('scroll', handleMobileScroll);
+      window.addEventListener('scroll', resetIdleTimer);
+      window.addEventListener('touchstart', resetIdleTimer);
+      window.addEventListener('click', resetIdleTimer);
+      window.addEventListener('popstate', triggerPopup);
+      window.history.pushState({ entry: true }, '');
+      resetIdleTimer();
+
+      cleanupFunctions.push(cleanupAll);
+    }, 10000);
 
     return () => {
-      window.removeEventListener('mouseout', handleDesktopTrigger);
-      window.removeEventListener('popstate', handleMobileTrigger);
+      clearTimeout(initTimeout);
+      cleanupFunctions.forEach(fn => fn());
+      window.removeEventListener('resize', checkMobile);
     };
-  }, []);
+  }, [isMobile]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,7 +158,7 @@ export default function ExitIntentPopup() {
   return (
     <AnimatePresence>
       {isVisible && (
-        <div className="fixed inset-0 z-[5000] flex items-center justify-center px-6">
+        <div className={`fixed inset-0 z-[5000] flex ${isMobile ? 'items-end' : 'items-center justify-center px-6'}`}>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -109,11 +167,18 @@ export default function ExitIntentPopup() {
             className="absolute inset-0 bg-black/95 backdrop-blur-sm"
           />
           <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative z-[5001] w-full max-w-[480px] bg-[#1e1e1e] border border-[#4f66fd] rounded-[16px] p-8 md:p-10 shadow-2xl overflow-hidden"
+            initial={isMobile ? { y: '100%' } : { scale: 0.9, opacity: 0, y: 20 }}
+            animate={isMobile ? { y: 0 } : { scale: 1, opacity: 1, y: 0 }}
+            exit={isMobile ? { y: '100%' } : { scale: 0.9, opacity: 0, y: 20 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className={`relative z-[5001] w-full ${isMobile ? 'bg-[#1e1e1e] border-t border-[#4f66fd] rounded-t-[24px] max-h-[90vh] overflow-y-auto' : 'max-w-[480px] bg-[#1e1e1e] border border-[#4f66fd] rounded-[16px] overflow-hidden'} p-8 md:p-10 shadow-2xl`}
           >
+            {isMobile && (
+              <div className="flex justify-center mb-6">
+                <div className="w-12 h-1.5 bg-white/10 rounded-full" />
+              </div>
+            )}
+            
             <button
               onClick={() => setIsVisible(false)}
               className="absolute top-6 right-6 text-white/40 hover:text-white transition-colors p-2"

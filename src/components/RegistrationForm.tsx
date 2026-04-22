@@ -159,6 +159,7 @@ export default function RegistrationForm() {
       const finalData = { ...formData };
       setSubmittedData(finalData);
       localStorage.setItem('sprint_applicant', JSON.stringify(finalData));
+      sessionStorage.setItem('form_submitted', 'true');
       setShowModal(true);
     } catch (err: any) {
       console.error("Error saving lead:", err);

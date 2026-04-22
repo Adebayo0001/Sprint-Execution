@@ -707,44 +707,35 @@ function Home() {
       </section>
 
       {/* SECTION 5 — THE TWO PATHS */}
-      <section id="highlights" className="pt-[56px] pb-[56px] md:pt-[80px] md:pb-[80px] px-6 md:px-24 bg-[#161616]">
+      <section id="highlights" className="pt-[56px] pb-[56px] md:pt-[100px] md:pb-[100px] px-6 md:px-24 bg-[#161616]">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <SectionLabel>Two ways to Sprint</SectionLabel>
-            <motion.p 
-               initial={{ opacity: 0 }}
-               whileInView={{ opacity: 1 }}
-               viewport={{ once: true }}
-               transition={{ duration: 0.8 }}
-               className="mx-auto max-w-[640px] text-[20px] text-[#aaaaaa] italic"
-            >
-              "Everyone who joins The Sprint gets the same accountability environment, the same daily check-ins, and the same relentless standard. Where people differ is in how much direct involvement they want from us."
-            </motion.p>
+          <div className="text-center mb-16">
+            <SectionLabel>TWO WAYS TO SPRINT</SectionLabel>
+            <Headline className="text-[40px] md:text-[56px] mb-6">
+              {"Everyone is welcome here.\nYou choose how deep you go."}
+            </Headline>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch pt-8">
-            {/* The Sprint Card */}
+          <div className="flex flex-col gap-0">
+            {/* The Sprint Block — Foundation */}
             <motion.div 
-               initial={{ opacity: 0, x: -40 }}
-               whileInView={{ opacity: 1, x: 0 }}
+               initial={{ opacity: 0, y: 20 }}
+               whileInView={{ opacity: 1, y: 0 }}
                viewport={{ once: true }}
                transition={{ duration: 0.7 }}
-               className="bg-[#1e1e1e] p-8 md:p-12 relative overflow-hidden flex flex-col border-t-2 border-brand-blue h-full"
+               className="bg-[#1e1e1e] p-8 md:p-12 relative overflow-hidden flex flex-col border-t-[3px] border-brand-blue"
             >
               <div className="mb-10">
-                <span className="text-[10px] text-brand-blue font-medium uppercase tracking-[0.15em] mb-4 block">FOR THOSE WHO ARE READY TO GO</span>
-                <h3 className="text-3xl md:text-[32px] font-bold text-white leading-tight mb-8">
-                  You have a goal.<br />We make sure<br />you finish it.
+                <span className="text-[#4f66fd] uppercase text-[11px] font-bold tracking-[0.2em] mb-4 block">HOW TO JOIN</span>
+                <h3 className="text-[40px] font-bold text-white leading-tight mb-8">
+                  Start with The Sprint.<br />Pay what you have.
                 </h3>
-                <div className="space-y-6 text-sm md:text-base mb-12">
+                <div className="space-y-8 text-[17px] text-[#cccccc] leading-[1.8] max-w-4xl mb-12 font-normal">
                   <p>
-                    You know what you want to work on. You just need an environment that makes quitting feel wrong. Daily check-ins, real people, and a team that notices when you go quiet.
-                  </p>
-                  <p>
-                    Monday to Friday. 90 days. No excuses accepted.
+                    This is the foundation. Everyone starts here. You pay what genuinely reflects your commitment right now — ₦1,000, ₦2,000, ₦5,000. No fixed price. No pressure.
                   </p>
 
-                  <ul className="space-y-4 pt-4">
+                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 pt-4 border-t border-white/5 mt-8">
                     {[
                       "You join the Sprint group immediately after payment",
                       "Every Monday to Friday, you show up and do meaningful work",
@@ -753,45 +744,54 @@ function Home() {
                       "Participants who go quiet get called out — the standard is kept high for everyone",
                       "At the end of 90 days, you will have a body of work, a finished goal, or a skill you actually used"
                     ].map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-3 text-[15px] text-white leading-[1.8]">
+                      <li key={idx} className="flex items-start gap-3 text-[15px] text-white leading-[1.6]">
                         <span className="text-brand-blue font-bold mt-[-2px]">—</span>
                         <span>{item}</span>
                       </li>
                     ))}
                   </ul>
 
-                  <p className="text-[13px] text-[#999999] italic mt-4">
+                  <p className="text-[14px] text-[#999999] italic mt-8">
                     "No average tasks. No half-effort. This is the real thing."
                   </p>
                 </div>
               </div>
 
-              <div className="mt-auto">
-                <div className="pt-8 border-t border-white/10 mb-8">
-                  <p className="text-white font-semibold mb-1">Commitment fee — Pay what you have</p>
-                  <p className="text-[13px] text-white/30 font-normal">Suggested: ₦2,000 · ₦5,000 · ₦10,000 · ₦50,000</p>
+              <div className="mt-auto flex flex-col md:flex-row md:items-center justify-between gap-8 pt-8 border-t border-white/10">
+                <div>
+                  <p className="text-white text-[16px] font-semibold mb-1 uppercase tracking-wider">Pay what you have</p>
+                  <p className="text-[13px] text-[#777777] font-normal">Suggested: ₦1,000 · ₦2,000 · ₦5,000</p>
                 </div>
-                <button onClick={scrollToApply} className="btn-editorial-outline w-full group">
-                  Join The Sprint
-                  <ArrowRight className="inline-block ml-3 group-hover:translate-x-1 transition-transform" size={18} />
+                <button 
+                  onClick={scrollToApply} 
+                  className="px-10 py-4 rounded-full border border-white text-white font-bold hover:bg-white hover:text-black transition-all flex items-center justify-center gap-2"
+                >
+                  Join The Sprint <ArrowRight size={18} />
                 </button>
               </div>
             </motion.div>
 
-            {/* The Builder's Track Card */}
+            {/* Divider */}
+            <div className="relative h-px w-full bg-white/[0.08] my-12 flex items-center justify-center">
+              <span className="bg-[#1e1e1e] px-4 text-[13px] text-[#777777] italic">
+                Want more than accountability?
+              </span>
+            </div>
+
+            {/* The Builder's Track Block — Addition */}
             <motion.div 
-               initial={{ opacity: 0, x: 40 }}
-               whileInView={{ opacity: 1, x: 0 }}
+               initial={{ opacity: 0, y: 20 }}
+               whileInView={{ opacity: 1, y: 0 }}
                viewport={{ once: true }}
-               transition={{ duration: 0.7 }}
-               className="bg-[#1a1f3a] p-8 md:p-12 relative overflow-hidden flex flex-col border-t-[3px] border-brand-blue h-full"
+               transition={{ duration: 0.7, delay: 0.2 }}
+               className="bg-[#161a2e] p-8 md:p-12 relative overflow-hidden flex flex-col border-t-2 border-[#4f66fd]/60 w-full max-w-[680px] mx-auto rounded-xl shadow-2xl"
             >
               <div className="mb-10">
-                <span className="text-[10px] text-brand-blue font-medium uppercase tracking-[0.15em] mb-4 block">FOR THOSE WHO WANT MORE THAN ACCOUNTABILITY</span>
+                <span className="text-[#4f66fd] uppercase text-[11px] font-bold tracking-[0.2em] mb-4 block">THE BUILDER'S TRACK</span>
                 <h3 className="text-3xl md:text-[32px] font-bold text-white leading-tight mb-8">
                   You want someone<br />in your corner<br />for all 90 days.
                 </h3>
-                <div className="space-y-6 text-sm md:text-base mb-12 font-normal">
+                <div className="space-y-6 text-sm md:text-base text-[#aaaaaa] mb-12 font-normal leading-relaxed">
                   <p>
                     Some people don't just need accountability — they need direction. A clear roadmap. Someone who will work with them directly, build the path, and stay close until it's done.
                   </p>
@@ -799,7 +799,7 @@ function Home() {
                     This is that. And it goes further.
                   </p>
                   
-                  <ul className="space-y-4">
+                  <ul className="space-y-4 pt-4 border-t border-white/5">
                     {[
                       "A personal roadmap session with Adebayo Kareem built around your exact goals",
                       "A learning curriculum matched to where you want to go",
@@ -809,7 +809,7 @@ function Home() {
                       "Recommended tools, courses, and resources tailored to your specific path",
                       "Priority guidance from the team throughout all 90 days"
                     ].map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-3 text-[15px] text-white leading-[1.8]">
+                      <li key={idx} className="flex items-start gap-3 text-[14px] text-white/80 leading-[1.6]">
                         <span className="text-brand-blue font-bold mt-[-2px]">—</span>
                         <span>
                           {item.includes("real samples of what you will learn to create") ? (
@@ -826,28 +826,29 @@ function Home() {
                     ))}
                   </ul>
 
-                  <p>
+                  <p className="mt-8 border-t border-white/5 pt-8">
                     Our goal is simple — by the time these 90 days are over, you will either have a skill that can pay you, a habit that grows your income, or a project that opens the next door. We are not here to just hold you accountable. We are here to make sure something changes.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-auto">
-                <div className="pt-8 border-t border-white/10 mb-8">
-                  <p className="text-white font-semibold mb-1">Commitment fee — ₦15,000</p>
-                  <p className="text-[13px] text-white/30">Everything in The Sprint, plus direct involvement from the team</p>
+              <div className="mt-auto border-t border-white/10 pt-8">
+                <div className="mb-8">
+                  <p className="text-white text-[16px] font-semibold mb-1 uppercase tracking-wider">₦12,500</p>
+                  <p className="text-[13px] text-[#777777]">Everything in The Sprint, plus direct involvement from the team</p>
+                  <p className="text-[12px] text-[#777777] mt-2">
+                    Can't pay at once? <a href="https://wa.me/2348120723575" target="_blank" rel="noopener noreferrer" className="text-brand-blue hover:underline">Reach out</a> — we may consider instalment payments.
+                  </p>
                 </div>
-                <button onClick={scrollToApply} className="btn-editorial-pill w-full shimmer-effect group">
-                  Join The Builder's Track
-                  <ArrowRight className="inline-block ml-3 group-hover:translate-x-1 transition-transform" size={18} />
+                <button 
+                  onClick={scrollToApply} 
+                  className="w-full bg-[#4f66fd] hover:bg-[#3d51d4] text-white font-bold py-4 rounded-full flex items-center justify-center gap-2 transition-all shimmer-effect"
+                >
+                  Join The Builder's Track <ArrowRight size={18} />
                 </button>
               </div>
             </motion.div>
           </div>
-
-          <p className="text-center text-sm text-white/30 mt-12">
-            Not sure which is right for you? Apply through either — we'll talk it through.
-          </p>
         </div>
       </section>
 
