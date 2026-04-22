@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
-import { X, ArrowRight, Check, Users, ExternalLink } from 'lucide-react';
+import { X, Menu, ArrowRight, Check, Users, ExternalLink } from 'lucide-react';
 import { doc, onSnapshot, collection, query, orderBy, limit } from 'firebase/firestore';
 import { db } from './lib/firebase';
 import RegistrationForm from './components/RegistrationForm';
@@ -186,25 +186,31 @@ const CountdownSection = () => {
 };
 
 const Navbar = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    setIsMenuOpen(false);
   };
+
+  const navLinks = [
+    { label: 'How it works', id: 'how-it-works' },
+    { label: 'Who it\'s for', id: 'who-it-is-for' },
+    { label: 'Highlights', id: 'highlights' },
+    { label: 'About', id: 'about' }
+  ];
 
   return (
     <nav className="fixed top-0 left-0 w-full h-[64px] bg-[#1e1e1e]/95 backdrop-blur-md z-[1000] border-b border-white/5 px-6 md:px-24 flex items-center justify-between">
       <div className="flex items-center">
-        <span className="text-white font-bold text-lg tracking-tight">
+        <Link to="/" className="text-white font-bold text-lg tracking-tight">
           The Sprint Execution 2026
-        </span>
+        </Link>
       </div>
       
+      {/* Desktop Menu */}
       <div className="hidden lg:flex items-center gap-8">
-        {[
-          { label: 'How it works', id: 'how-it-works' },
-          { label: 'Who it\'s for', id: 'who-it-is-for' },
-          { label: 'Highlights', id: 'highlights' },
-          { label: 'About', id: 'about' }
-        ].map((item) => (
+        {navLinks.map((item) => (
           <button
             key={item.id}
             onClick={() => scrollToSection(item.id)}
@@ -229,12 +235,58 @@ const Navbar = () => {
         </button>
       </div>
       
-      {/* Mobile Menu Button - Optional simplified version */}
-      <div className="lg:hidden">
-        <button onClick={() => scrollToSection('apply')} className="bg-brand-blue text-white text-[10px] uppercase tracking-widest font-bold px-4 py-2 rounded-full">
+      {/* Mobile Toggle & Apply */}
+      <div className="lg:hidden flex items-center gap-4">
+        <button
+          onClick={() => scrollToSection('apply')}
+          className="bg-brand-blue text-white text-[10px] uppercase tracking-widest font-bold px-4 py-2 rounded-full"
+        >
           Apply
         </button>
+        <button 
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="text-white/60 hover:text-white transition-colors"
+        >
+          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-[64px] left-0 w-full bg-[#1e1e1e] border-b border-white/5 z-[999] lg:hidden overflow-hidden"
+          >
+            <div className="p-6 flex flex-col gap-6">
+              {navLinks.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => scrollToSection(item.id)}
+                  className="text-left text-sm text-white/60 hover:text-brand-blue font-medium transition-colors py-2 border-b border-white/5"
+                >
+                  {item.label}
+                </button>
+              ))}
+              <Link 
+                to="/compare" 
+                onClick={() => setIsMenuOpen(false)}
+                className="text-sm text-white/60 hover:text-brand-blue font-medium transition-colors py-2 border-b border-white/5"
+              >
+                Quick overview
+              </Link>
+              <button
+                onClick={() => scrollToSection('apply')}
+                className="w-full bg-brand-blue text-white text-sm font-bold py-4 rounded-xl flex items-center justify-center gap-2"
+              >
+                Apply Now <ArrowRight size={18} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };
