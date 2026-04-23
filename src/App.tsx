@@ -898,7 +898,7 @@ function Home() {
                   <p className="text-white text-[16px] font-semibold mb-1 uppercase tracking-wider">₦12,500</p>
                   <p className="text-[13px] text-[#777777]">Everything in The Sprint, plus direct involvement from the team</p>
                   <p className="text-[12px] text-[#777777] mt-2">
-                    Can't pay at once? <a href="https://wa.me/2348120723575" target="_blank" rel="noopener noreferrer" className="text-brand-blue hover:underline">Reach out</a> — we may consider instalment payments.
+                    Can't pay at once? <a href="https://wa.me/2348120723575?text=Hi%2C%20I%27m%20interested%20in%20The%20Builder%27s%20Track%20but%20would%20like%20to%20discuss%20instalment%20payment%20options.%0A%0AI%27m%20reaching%20out%20from%20the%20main%20website.%0A%0APlease%20help%20me%20out%20with%20this." target="_blank" rel="noopener noreferrer" className="text-brand-blue hover:underline">Reach out</a> — we may consider instalment payments.
                   </p>
                 </div>
                 <button 

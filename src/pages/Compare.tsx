@@ -50,6 +50,20 @@ export default function Compare() {
     document.getElementById('quick-overview')?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const getWhatsAppLink = (messageType: 'instalment' | 'general' = 'general') => {
+    const baseText = messageType === 'instalment' 
+      ? "Hi, I'm interested in The Builder's Track but would like to discuss instalment payment options."
+      : "Hi, I have some questions regarding The Sprint Execution and my registration.";
+
+    const text = `${baseText}
+
+I'm reaching out from the comparison page.
+
+Please help me out with this.`;
+
+    return `${WHATSAPP_CONTACT_LINK}?text=${encodeURIComponent(text)}`;
+  };
+
   return (
     <div className="min-h-screen bg-[#1e1e1e] text-white font-sans selection:bg-[#4f66fd]/30 pb-40">
       {/* Top Header Section */}
@@ -239,7 +253,7 @@ export default function Compare() {
                 International? Pay via Selar →
               </a>
               <p className="text-[13px] text-[#777777]">
-                Want to pay in instalments? <a href={WHATSAPP_CONTACT_LINK} target="_blank" rel="noopener noreferrer" className="text-[#4f66fd] font-medium hover:underline">Talk to us →</a>
+                Want to pay in instalments? <a href={getWhatsAppLink('instalment')} target="_blank" rel="noopener noreferrer" className="text-[#4f66fd] font-medium hover:underline">Talk to us →</a>
               </p>
             </div>
           </div>
@@ -250,7 +264,7 @@ export default function Compare() {
       <footer className="max-w-4xl mx-auto px-6 text-center">
         <div className="h-px w-full bg-white/10 mb-12" />
         <p className="text-white/60 font-semibold mb-2">Registration closes April 30th. Cohort begins May 4th.</p>
-        <a href={WHATSAPP_CONTACT_LINK} target="_blank" rel="noopener noreferrer" className="text-brand-blue font-bold flex items-center justify-center gap-2 hover:underline mb-12">
+        <a href={getWhatsAppLink('general')} target="_blank" rel="noopener noreferrer" className="text-brand-blue font-bold flex items-center justify-center gap-2 hover:underline mb-12">
           Questions? Message us on WhatsApp <ArrowRight size={16} />
         </a>
         <div className="pt-8">

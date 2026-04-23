@@ -10,7 +10,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { Check, Loader2, Send, ExternalLink, X, Users, ArrowRight } from 'lucide-react';
-import { collection, serverTimestamp, onSnapshot, doc, runTransaction, increment, setDoc } from 'firebase/firestore';
+import { collection, serverTimestamp, onSnapshot, doc, runTransaction, increment, setDoc, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { PAYSTACK_LINK_SPRINT, PAYSTACK_LINK_BUILDERS, SELAR_LINK, WHATSAPP_NUMBER, WHATSAPP_CONTACT_LINK } from '../constants';
 import { sendToGoogleSheets } from '../lib/sheets';
@@ -108,6 +108,17 @@ export default function RegistrationForm() {
     const firstName = formData.full_name.trim().split(' ')[0] || 'Executor';
 
     try {
+      // Check for existing registration with same email
+      const emailLower = formData.email.toLowerCase().trim();
+      const q = query(collection(db, 'sprint_leads'), where('email', '==', emailLower));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        setError("This email is already registered. If you have any issues, please reach out via WhatsApp.");
+        setIsLoading(false);
+        return;
+      }
+
       if (formData.support_level === 'group_only' && !showUpsellModal && !showModal) {
         setShowUpsellModal(true);
         setIsLoading(false);
@@ -121,6 +132,7 @@ export default function RegistrationForm() {
         const leadRef = doc(collection(db, 'sprint_leads'));
         transaction.set(leadRef, {
           ...formData,
+          email: emailLower, // Lowercase for consistency
           support_level_label: formData.support_level === 'group_plus_support' ? "The Builder's Track" : "The Sprint",
           created_at: serverTimestamp(),
         });
@@ -173,8 +185,20 @@ export default function RegistrationForm() {
   };
 
   const getWhatsAppLink = () => {
-    if (!submittedData) return '';
-    const text = `Hi, I'm ${submittedData.full_name}. I just completed my commitment fee for The Sprint Execution 2026 – 1.0 (Pathway: ${submittedData.support_level === 'group_plus_support' ? "The Builder's Track" : "The Sprint"}). My goal for the 90 days is: ${submittedData.goal}. My email is ${submittedData.email}. Please add me to the Sprint group.`;
+    const name = formData.full_name || submittedData?.full_name || 'Executor';
+    const email = formData.email || submittedData?.email || '';
+    const track = (formData.support_level === 'group_plus_support' || submittedData?.support_level === 'group_plus_support') ? "The Builder's Track" : "The Sprint";
+    
+    const text = `Hi, I'm ${name}.
+
+I just filled the registration form for The Sprint Execution 2026 (Pathway: ${track}).
+
+I am having some issues with payment and would like to complete my registration or make a direct transfer.
+
+My registered email is: ${email}
+
+Please help me out with this.`;
+
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
   };
 

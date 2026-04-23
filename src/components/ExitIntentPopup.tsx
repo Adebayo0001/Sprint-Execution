@@ -216,7 +216,7 @@ export default function ExitIntentPopup() {
                       Tell Me More About The Builder's Track <ArrowRight size={18} />
                     </button>
                     <a
-                      href="https://wa.me/2348120723575"
+                      href="https://wa.me/2348120723575?text=Hi%2C%20I%20have%20some%20questions%20regarding%20The%20Sprint%20Execution.%0A%0AI%27m%20reaching%20out%20from%20the%20website%20popup.%0A%0APlease%20help%20me%20out%20with%20this."
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full text-[#777777] hover:text-white text-[13px] font-medium text-center block pt-2 transition-colors"
@@ -268,7 +268,7 @@ export default function ExitIntentPopup() {
 
                       <div className="space-y-4 mb-10">
                         <a
-                          href="https://wa.me/2348120723575?text=Hi%2C%20I%27m%20interested%20in%20The%20Builder%27s%20Track%20but%20would%20like%20to%20discuss%20instalment%20payment%20options."
+                          href="https://wa.me/2348120723575?text=Hi%2C%20I%27m%20interested%20in%20The%20Builder%27s%20Track%20but%20would%20like%20to%20discuss%20instalment%20payment%20options.%0A%0AI%27m%20reaching%20out%20from%20the%20exit%20popup.%0A%0APlease%20help%20me%20out%20with%20this."
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`w-full bg-[#4f66fd] hover:bg-[#3d51d4] text-white font-bold rounded-full flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/10 text-center ${isMobile ? 'h-[56px] text-[16px]' : 'py-4'}`}

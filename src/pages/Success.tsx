@@ -69,6 +69,24 @@ export default function Success() {
     }
   };
 
+  const getWhatsAppContactLink = () => {
+    const applicantName = applicant?.full_name || rawName || 'Executor';
+    const applicantEmail = applicant?.email || '';
+    const track = isTeamSupport ? "The Builder's Track" : "The Sprint";
+    
+    const text = `Hi, I'm ${applicantName}.
+
+I just filled the registration form for The Sprint Execution 2026 (Pathway: ${track}).
+
+I am having some issues with payment and would like to complete my registration or make a direct transfer.
+
+My registered email is: ${applicantEmail}
+
+Please help me out with this.`;
+
+    return `${WHATSAPP_CONTACT_LINK}?text=${encodeURIComponent(text)}`;
+  };
+
   return (
     <div className="min-h-screen bg-brand-dark flex flex-col items-center justify-center px-6 py-20 relative overflow-hidden">
       {/* Background Decorations */}
@@ -119,7 +137,7 @@ export default function Success() {
                  <p className="text-xs text-white/50 mb-4 font-normal">The main accountability hub where everything happens.</p>
                   <div className="mt-4 pt-4 border-t border-white/5">
                     <a 
-                      href={WHATSAPP_CONTACT_LINK}
+                      href={getWhatsAppContactLink()}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-brand-blue hover:underline text-[13px] font-medium transition-all"
