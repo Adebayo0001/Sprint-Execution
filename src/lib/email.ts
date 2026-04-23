@@ -1,5 +1,5 @@
 import emailjs from '@emailjs/browser';
-import { WHATSAPP_GROUP_EXECUTORS, WHATSAPP_GROUP_SUPPORT, SUPPORT_EMAIL } from '../constants';
+import { SPRINT_GROUP_LINK, BUILDERS_GROUP_LINK, SUPPORT_EMAIL } from '../constants';
 
 interface Applicant {
   full_name: string;
@@ -29,10 +29,10 @@ export const sendConfirmationEmail = async (applicant: Applicant, track: 'sprint
     name: applicant.full_name,
     email: applicant.email,
     goal: applicant.goal,
-    sprint_group_link: WHATSAPP_GROUP_EXECUTORS,
+    sprint_group_link: SPRINT_GROUP_LINK,
     reply_to: SUPPORT_EMAIL,
     from_email: SUPPORT_EMAIL,
-    ...(track === 'builders' && { builders_group_link: WHATSAPP_GROUP_SUPPORT }),
+    ...(track === 'builders' && { builders_group_link: BUILDERS_GROUP_LINK }),
   };
 
   try {

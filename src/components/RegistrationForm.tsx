@@ -140,6 +140,7 @@ export default function RegistrationForm() {
         const feedRef = doc(collection(db, 'public_feed'));
         transaction.set(feedRef, {
           name: firstName,
+          email: emailLower, // Hidden from UI but useful for cleanup
           state: formData.state,
           country: formData.country,
           tier: formData.support_level === 'group_plus_support' ? "The Builder's Track" : "The Sprint",
@@ -174,7 +175,6 @@ export default function RegistrationForm() {
       const finalData = { ...formData };
       setSubmittedData(finalData);
       localStorage.setItem('sprint_applicant', JSON.stringify(finalData));
-      sessionStorage.setItem('form_submitted', 'true');
       setShowModal(true);
     } catch (err: any) {
       console.error("Error saving lead:", err);
