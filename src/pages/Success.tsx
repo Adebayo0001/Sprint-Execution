@@ -22,14 +22,16 @@ export default function Success() {
   const isSprint = trackParam === 'sprint';
 
   useEffect(() => {
-    // PROTECT ROUTE: Only allow access if track param is valid
-    if (!isBuilders && !isSprint) {
-      window.location.href = '/';
-      return;
-    }
-
     // Scroll to top on mount
     window.scrollTo(0, 0);
+
+    // PROTECT ROUTE: Only allow access if track param is valid
+    if (!isBuilders && !isSprint) {
+      const timer = setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
 
     const rawApplicant = localStorage.getItem('sprint_applicant');
     if (rawApplicant) {
@@ -46,8 +48,9 @@ export default function Success() {
 
     const initOnboarding = async () => {
       try {
-        if (!rawApplicant) return;
-        const parsed = JSON.parse(rawApplicant);
+        const applicantData = localStorage.getItem('sprint_applicant');
+        if (!applicantData) return;
+        const parsed = JSON.parse(applicantData);
         const track = isBuilders ? 'builders' : 'sprint';
         await sendConfirmationEmail(parsed, track);
       } catch (err) {
@@ -56,7 +59,7 @@ export default function Success() {
     };
 
     initOnboarding();
-  }, [trackParam, isBuilders]);
+  }, [trackParam, isBuilders, isSprint]);
 
   const shareApp = () => {
     const text = `I just joined The Sprint Execution 2026. Only 50 spots available for this cohort. Secure yours here: ${window.location.origin}`;
@@ -74,11 +77,11 @@ export default function Success() {
   const getWhatsAppContactLink = () => {
     const applicantName = applicant?.full_name || rawName || 'Executor';
     const applicantEmail = applicant?.email || '';
-    const track = isTeamSupport ? "The Builder's Track" : "The Sprint";
+    const trackName = isBuilders ? "The Builder's Track" : "The Sprint";
     
     const text = `Hi, I'm ${applicantName}.
 
-I just filled the registration form for The Sprint Execution 2026 (Pathway: ${track}).
+I just filled the registration form for The Sprint Execution 2026 (Pathway: ${trackName}).
 
 I am having some issues with payment and would like to complete my registration or make a direct transfer.
 
@@ -117,6 +120,11 @@ Please help me out with this.`;
         <p className="text-xl font-medium mb-4 text-white/90">
           Glad to have you, {name}!
         </p>
+        {!applicant && (
+          <p className="text-brand-blue font-medium mb-6 text-sm bg-brand-blue/10 inline-block px-4 py-1 rounded-full">
+            Your payment was received. Welcome to The Sprint Execution 2026 – 1.0.
+          </p>
+        )}
         <p className="text-white/60 mb-10 leading-relaxed font-normal">
           Your commitment has been recorded. You are now part of the 50 executors for Cohort 1.0. 
           Follow the steps below to finalize your onboarding.
