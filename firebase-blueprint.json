@@ -69,6 +69,10 @@
     "public_feed/{feedId}": {
       "schema": "PublicActivity",
       "description": "Social proof notifications."
+    },
+    "pending_payments/{email}": {
+      "schema": "object",
+      "description": "Records used to track onboarding emails across redirects."
     }
   }
 }
