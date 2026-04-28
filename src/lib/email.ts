@@ -13,6 +13,12 @@ export const sendConfirmationEmail = async (applicant: Applicant, track: 'sprint
   const sprintTemplateId = import.meta.env.VITE_EMAILJS_TEMPLATE_SPRINT;
   const buildersTemplateId = import.meta.env.VITE_EMAILJS_TEMPLATE_BUILDERS;
 
+  console.log('EmailJS Config Debug:');
+  console.log('VITE_EMAILJS_PUBLIC_KEY:', publicKey);
+  console.log('VITE_EMAILJS_SERVICE_ID:', serviceId);
+  console.log('VITE_EMAILJS_TEMPLATE_SPRINT:', sprintTemplateId);
+  console.log('VITE_EMAILJS_TEMPLATE_BUILDERS:', buildersTemplateId);
+
   if (!serviceId || !publicKey) {
     console.warn('EmailJS missing environment variables');
     return;
@@ -34,6 +40,8 @@ export const sendConfirmationEmail = async (applicant: Applicant, track: 'sprint
     from_email: SUPPORT_EMAIL,
     ...(track === 'builders' && { builders_group_link: BUILDERS_GROUP_LINK }),
   };
+
+  console.log("Sending email to:", applicant.email, "using template:", templateId);
 
   try {
     const result = await emailjs.send(serviceId, templateId, templateParams, publicKey);

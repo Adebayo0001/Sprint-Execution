@@ -14,6 +14,7 @@ import { collection, serverTimestamp, onSnapshot, doc, runTransaction, increment
 import { db } from '../lib/firebase';
 import { PAYSTACK_LINK_SPRINT, PAYSTACK_LINK_BUILDERS, SELAR_LINK, WHATSAPP_NUMBER, WHATSAPP_CONTACT_LINK } from '../constants';
 import { sendToGoogleSheets } from '../lib/sheets';
+import { sendConfirmationEmail } from '../lib/email';
 
 interface FormData {
   full_name: string;
@@ -175,6 +176,17 @@ export default function RegistrationForm() {
       const finalData = { ...formData };
       setSubmittedData(finalData);
       localStorage.setItem('sprint_applicant', JSON.stringify(finalData));
+      
+      // Send confirmation email immediately after saving to Firebase
+      try {
+        localStorage.removeItem('sprint_email_failed');
+        const track = formData.support_level === 'group_plus_support' ? 'builders' : 'sprint';
+        await sendConfirmationEmail(finalData, track);
+      } catch (emailErr) {
+        console.error("Failed to send confirmation email on submit:", emailErr);
+        localStorage.setItem('sprint_email_failed', 'true');
+      }
+
       setShowModal(true);
     } catch (err: any) {
       console.error("Error saving lead:", err);

@@ -8,15 +8,14 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { CheckCircle2, MessageSquare, Share2, ArrowLeft, Users, ShieldCheck } from 'lucide-react';
 import { SPRINT_GROUP_LINK, BUILDERS_GROUP_LINK, WHATSAPP_CONTACT_LINK } from '../constants';
-import { sendConfirmationEmail } from '../lib/email';
 
 export default function Success() {
   const [searchParams] = useSearchParams();
   const trackParam = searchParams.get('track');
   const rawName = searchParams.get('name') || 'Executor';
   const name = rawName.trim().split(' ')[0];
-  const emailSentRef = useRef(false);
   const [applicant, setApplicant] = React.useState<any>(null);
+  const [emailFailed, setEmailFailed] = React.useState(false);
 
   const isBuilders = trackParam === 'builders';
   const isSprint = trackParam === 'sprint';
@@ -43,22 +42,9 @@ export default function Success() {
       }
     }
 
-    if (emailSentRef.current) return;
-    emailSentRef.current = true;
-
-    const initOnboarding = async () => {
-      try {
-        const applicantData = localStorage.getItem('sprint_applicant');
-        if (!applicantData) return;
-        const parsed = JSON.parse(applicantData);
-        const track = isBuilders ? 'builders' : 'sprint';
-        await sendConfirmationEmail(parsed, track);
-      } catch (err) {
-        console.error("Non-blocking error in initOnboarding:", err);
-      }
-    };
-
-    initOnboarding();
+    if (localStorage.getItem('sprint_email_failed') === 'true') {
+      setEmailFailed(true);
+    }
   }, [trackParam, isBuilders, isSprint]);
 
   const shareApp = () => {
@@ -124,6 +110,14 @@ Please help me out with this.`;
           <p className="text-brand-blue font-medium mb-6 text-sm bg-brand-blue/10 inline-block px-4 py-1 rounded-full">
             Your payment was received. Welcome to The Sprint Execution 2026 – 1.0.
           </p>
+        )}
+
+        {emailFailed && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-center">
+            <p className="text-red-400 text-sm font-medium">
+              We could not send your confirmation email. Please message us on WhatsApp at +2348120723575 and we will sort it out.
+            </p>
+          </div>
         )}
         <p className="text-white/60 mb-10 leading-relaxed font-normal">
           Your commitment has been recorded. You are now part of the 50 executors for Cohort 1.0. 
