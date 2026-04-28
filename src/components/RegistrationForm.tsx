@@ -186,8 +186,13 @@ export default function RegistrationForm() {
         referred_by: localStorage.getItem('referral_source') || ''
       });
 
-      const finalData = { ...formData };
-      setSubmittedData(finalData);
+      const finalData = { 
+        name: formData.full_name,
+        email: formData.email,
+        goal: formData.goal,
+        support_level: formData.support_level
+      };
+      setSubmittedData(formData); // Keep the UI state with full formData
       localStorage.setItem('sprint_applicant', JSON.stringify(finalData));
       
       setShowModal(true);
