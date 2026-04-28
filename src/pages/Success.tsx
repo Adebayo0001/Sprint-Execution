@@ -8,6 +8,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { CheckCircle2, MessageSquare, Share2, ArrowLeft, Users, ShieldCheck } from 'lucide-react';
 import { SPRINT_GROUP_LINK, BUILDERS_GROUP_LINK, WHATSAPP_CONTACT_LINK } from '../constants';
+import { sendConfirmationEmail } from '../lib/email';
 
 export default function Success() {
   const [searchParams] = useSearchParams();
@@ -16,6 +17,7 @@ export default function Success() {
   const name = rawName.trim().split(' ')[0];
   const [applicant, setApplicant] = React.useState<any>(null);
   const [emailFailed, setEmailFailed] = React.useState(false);
+  const emailSentRef = useRef(false);
 
   const isBuilders = trackParam === 'builders';
   const isSprint = trackParam === 'sprint';
@@ -25,19 +27,35 @@ export default function Success() {
     window.scrollTo(0, 0);
 
     const rawApplicant = localStorage.getItem('sprint_applicant');
+    let parsedApplicant = null;
     if (rawApplicant) {
       try {
-        const parsed = JSON.parse(rawApplicant);
-        setApplicant(parsed);
+        parsedApplicant = JSON.parse(rawApplicant);
+        setApplicant(parsedApplicant);
       } catch (e) {
         console.error("Error parsing applicant data:", e);
       }
     }
 
-    if (localStorage.getItem('sprint_email_failed') === 'true') {
-      setEmailFailed(true);
+    // Only send email if we have a track parameter (indicating a redirect from payment)
+    // and we haven't sent it in this session component lifecycle
+    if ((isBuilders || isSprint) && !emailSentRef.current) {
+      emailSentRef.current = true;
+      
+      const sendEmail = async () => {
+        try {
+          const dataToUse = parsedApplicant || { full_name: rawName, email: '' }; // Fallback if localstorage missing
+          const track = isBuilders ? 'builders' : 'sprint';
+          await sendConfirmationEmail(dataToUse, track);
+        } catch (err) {
+          console.error("email sending error on success page:", err);
+          setEmailFailed(true);
+        }
+      };
+      
+      sendEmail();
     }
-  }, [trackParam, isBuilders, isSprint]);
+  }, [trackParam, isBuilders, isSprint, rawName]);
 
   const shareApp = () => {
     const text = `I just joined The Sprint Execution 2026. Only 50 spots available for this cohort. Secure yours here: ${window.location.origin}`;
