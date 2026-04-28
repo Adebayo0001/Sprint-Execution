@@ -114,7 +114,9 @@ export default function RegistrationForm() {
       const q = query(collection(db, 'sprint_leads'), where('email', '==', emailLower));
       const querySnapshot = await getDocs(q);
       
-      if (!querySnapshot.empty) {
+      const isBypassEmail = emailLower === 'kareemadebayo2022@gmail.com';
+      
+      if (!querySnapshot.empty && !isBypassEmail) {
         setError("This email is already registered. If you have any issues, please reach out via WhatsApp.");
         setIsLoading(false);
         return;
