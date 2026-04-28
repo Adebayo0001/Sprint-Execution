@@ -1,45 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Global Safety Net
     match /{document=**} {
-      allow read, write: if false;
-    }
-
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
-    }
-
-    function incoming() {
-      return request.resource.data;
-    }
-
-    // Sprint Leads Validation
-    function isValidLead(data) {
-      return data.keys().hasAll(['full_name', 'email', 'whatsapp', 'state', 'country', 'goal', 'support_level', 'created_at'])
-        && data.full_name is string && data.full_name.size() > 0
-        && data.created_at == request.time;
-    }
-
-    match /sprint_leads/{leadId} {
-      allow create, read: if true;
-      allow update, delete: if false;
-    }
-
-    match /partial_leads/{email} {
-      allow get, create, update: if true;
-      allow list, delete: if false;
-    }
-
-    match /public_feed/{feedId} {
-      allow read, create: if true;
-    }
-
-    match /global_stats/{statId} {
       allow read, write: if true;
     }
   }
