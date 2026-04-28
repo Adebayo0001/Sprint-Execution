@@ -64,8 +64,18 @@ export default function Success() {
         try {
           // 1. Primary path: find by specific email (URL or LocalStorage)
           if (email) {
-            console.log("Step 3: Checking Firebase for pending payment for email:", email);
-            const pendingRef = doc(db, 'pending_payments', email.toLowerCase());
+            const emailLower = email.toLowerCase();
+            console.log("Step 3: Checking Firebase for pending payment for email:", emailLower);
+            const pendingRef = doc(db, 'pending_payments', emailLower);
+
+            // TESTING BYPASS: for specific email, always reset sent status before checking
+            if (emailLower === 'kareemadebayo2022@gmail.com') {
+              console.log("Testing bypass detected: Resetting email_sent to false for test account.");
+              await updateDoc(pendingRef, { email_sent: false }).catch(() => {
+                console.log("Record might not exist yet, skipping reset.");
+              });
+            }
+
             const pendingSnap = await getDoc(pendingRef);
 
             if (pendingSnap.exists()) {
@@ -75,12 +85,14 @@ export default function Success() {
               if (!data.email_sent) {
                 await triggerEmail(data, pendingRef);
               } else {
-                console.log("Email already marked as sent in Firebase, skipping Step 6-8");
+                console.log("Skipping: email_sent already true in Firebase for " + emailLower);
               }
               return;
             } else {
-              console.log("Step 4: No pending payment record found for this email in Firebase");
+              console.log("Step 4: No pending payment record found (Skipping: no record in collection)");
             }
+          } else {
+            console.log("Skipping: No email found in URL or LocalStorage to lookup.");
           }
 
           // 2. Secondary path: Super fallback - look for any recent unsent payment
@@ -108,27 +120,28 @@ export default function Success() {
               await triggerEmail(data, data.ref);
               return;
             } else {
-              console.log("Step 5c: Found unsent docs but none within the last 15 mins.");
+              console.log("Skipping: Found unsent docs but none within the last 15 mins.");
             }
           } else {
-            console.log("Step 5c: No unsent payments found at all in Firebase.");
+            console.log("Skipping: No unsent payments found at all in Firebase.");
           }
 
           // 3. Last resort: just use whatever we have in memory if we have something
           if (parsedApplicant) {
-              console.log("Step 6 (Last Resort): Sending email using only localStorage data (no DB tracking)");
-              const track = isBuilders ? 'builders' : 'sprint';
-              await sendConfirmationEmail(parsedApplicant, track);
-              console.log("Step 7: Email sent via last resort path");
-            } else {
-              console.log("Step 6: Total failure - no identity found via email, recent payments, or localStorage.");
-            }
+            console.log("Step 6 (Last Resort): Sending email using only localStorage data (no DB tracking)");
+            const track = isBuilders ? 'builders' : 'sprint';
+            await sendConfirmationEmail(parsedApplicant, track);
+            console.log("Step 7: Email sent via last resort path");
+          } else {
+            console.log("Step 6: Total failure - no identity found via email, recent payments, or localStorage.");
+          }
         } catch (err) {
           console.error("Step 8: Email logic failed =", err);
           setEmailFailed(true);
         }
       } else {
-        console.log("Skipping email logic because:", { isBuilders, isSprint, emailSentAlready: emailSentRef.current });
+        const reason = !isBuilders && !isSprint ? "No track parameter in URL" : "emailSentRef already true";
+        console.log(`Skipping email logic because: ${reason}`);
       }
     };
 
