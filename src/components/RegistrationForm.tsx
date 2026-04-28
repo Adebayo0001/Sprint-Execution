@@ -154,6 +154,18 @@ export default function RegistrationForm() {
         } else {
           transaction.update(counterRef, { count: increment(1) });
         }
+
+        // Save to pending_payments for reliable onboarding even if localStorage is cleared
+        const pendingRef = doc(db, 'pending_payments', emailLower);
+        transaction.set(pendingRef, {
+          name: formData.full_name,
+          email: emailLower,
+          goal: formData.goal,
+          support_level: formData.support_level,
+          track: formData.support_level === 'group_plus_support' ? 'builders' : 'sprint',
+          email_sent: false,
+          created_at: serverTimestamp(),
+        });
       });
 
       // Update partial lead status to completed

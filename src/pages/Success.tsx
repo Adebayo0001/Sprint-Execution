@@ -9,6 +9,8 @@ import { motion } from 'motion/react';
 import { CheckCircle2, MessageSquare, Share2, ArrowLeft, Users, ShieldCheck } from 'lucide-react';
 import { SPRINT_GROUP_LINK, BUILDERS_GROUP_LINK, WHATSAPP_CONTACT_LINK } from '../constants';
 import { sendConfirmationEmail } from '../lib/email';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 export default function Success() {
   const [searchParams] = useSearchParams();
@@ -26,35 +28,68 @@ export default function Success() {
     // Scroll to top on mount
     window.scrollTo(0, 0);
 
-    const rawApplicant = localStorage.getItem('sprint_applicant');
-    let parsedApplicant = null;
-    if (rawApplicant) {
-      try {
-        parsedApplicant = JSON.parse(rawApplicant);
-        setApplicant(parsedApplicant);
-      } catch (e) {
-        console.error("Error parsing applicant data:", e);
-      }
-    }
+    const initOnboarding = async () => {
+      const rawApplicant = localStorage.getItem('sprint_applicant');
+      let email = '';
+      let parsedApplicant = null;
 
-    // Only send email if we have a track parameter (indicating a redirect from payment)
-    // and we haven't sent it in this session component lifecycle
-    if ((isBuilders || isSprint) && !emailSentRef.current) {
-      emailSentRef.current = true;
-      
-      const sendEmail = async () => {
+      if (rawApplicant) {
         try {
-          const dataToUse = parsedApplicant || { full_name: rawName, email: '' }; // Fallback if localstorage missing
-          const track = isBuilders ? 'builders' : 'sprint';
-          await sendConfirmationEmail(dataToUse, track);
+          parsedApplicant = JSON.parse(rawApplicant);
+          email = parsedApplicant.email;
+          setApplicant(parsedApplicant);
+        } catch (e) {
+          console.error("Error parsing applicant data:", e);
+        }
+      }
+
+      // Only send email if we have a track parameter (indicating a redirect from payment)
+      // and we haven't sent it in this session component lifecycle
+      if ((isBuilders || isSprint) && !emailSentRef.current) {
+        emailSentRef.current = true;
+        
+        try {
+          // If we have an email, use Firebase as source of truth
+          if (email) {
+            const pendingRef = doc(db, 'pending_payments', email.toLowerCase());
+            const pendingSnap = await getDoc(pendingRef);
+
+            if (pendingSnap.exists()) {
+              const data = pendingSnap.data();
+              if (!data.email_sent) {
+                const trackToUse = data.track || (isBuilders ? 'builders' : 'sprint');
+                await sendConfirmationEmail({
+                  full_name: data.name,
+                  email: data.email,
+                  goal: data.goal
+                } as any, trackToUse);
+
+                // Mark as sent in Firebase
+                await updateDoc(pendingRef, { email_sent: true });
+                console.log("Confirmation email sent and tracked via Firebase");
+              } else {
+                console.log("Email already marked as sent in Firebase");
+              }
+            } else {
+              // Fallback to localStorage if Firebase record missing but we have local data
+              if (parsedApplicant) {
+                const track = isBuilders ? 'builders' : 'sprint';
+                await sendConfirmationEmail(parsedApplicant, track);
+              }
+            }
+          } else if (parsedApplicant) {
+            // Fallback for cases where email might not be extracted but object exists
+            const track = isBuilders ? 'builders' : 'sprint';
+            await sendConfirmationEmail(parsedApplicant, track);
+          }
         } catch (err) {
           console.error("email sending error on success page:", err);
           setEmailFailed(true);
         }
-      };
-      
-      sendEmail();
-    }
+      }
+    };
+
+    initOnboarding();
   }, [trackParam, isBuilders, isSprint, rawName]);
 
   const shareApp = () => {
