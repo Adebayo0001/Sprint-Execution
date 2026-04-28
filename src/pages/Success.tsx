@@ -27,8 +27,17 @@ export default function Success() {
   useEffect(() => {
     // Scroll to top on mount
     window.scrollTo(0, 0);
+    console.log("Step 1: Success page mounted");
+    
+    // Log environment variables
+    console.log("Environment Variables Check:");
+    console.log("VITE_EMAILJS_PUBLIC_KEY:", import.meta.env.VITE_EMAILJS_PUBLIC_KEY);
+    console.log("VITE_EMAILJS_SERVICE_ID:", import.meta.env.VITE_EMAILJS_SERVICE_ID);
+    console.log("VITE_EMAILJS_TEMPLATE_SPRINT:", import.meta.env.VITE_EMAILJS_TEMPLATE_SPRINT);
+    console.log("VITE_EMAILJS_TEMPLATE_BUILDERS:", import.meta.env.VITE_EMAILJS_TEMPLATE_BUILDERS);
 
     const initOnboarding = async () => {
+      console.log("Step 2: Track from URL =", trackParam);
       const rawApplicant = localStorage.getItem('sprint_applicant');
       let email = '';
       let parsedApplicant = null;
@@ -38,9 +47,12 @@ export default function Success() {
           parsedApplicant = JSON.parse(rawApplicant);
           email = parsedApplicant.email;
           setApplicant(parsedApplicant);
+          console.log("LocalStorage applicant data found:", parsedApplicant);
         } catch (e) {
           console.error("Error parsing applicant data:", e);
         }
+      } else {
+        console.log("LocalStorage applicant data NOT found");
       }
 
       // Only send email if we have a track parameter (indicating a redirect from payment)
@@ -51,41 +63,66 @@ export default function Success() {
         try {
           // If we have an email, use Firebase as source of truth
           if (email) {
+            console.log("Step 3: Checking Firebase for pending payment for:", email);
             const pendingRef = doc(db, 'pending_payments', email.toLowerCase());
             const pendingSnap = await getDoc(pendingRef);
 
             if (pendingSnap.exists()) {
               const data = pendingSnap.data();
+              console.log("Step 4: Pending payment found =", true);
+              console.log("Step 5: email_sent status =", data.email_sent);
+              
               if (!data.email_sent) {
                 const trackToUse = data.track || (isBuilders ? 'builders' : 'sprint');
-                await sendConfirmationEmail({
+                const applicantObj = {
                   full_name: data.name,
                   email: data.email,
                   goal: data.goal
-                } as any, trackToUse);
+                } as any;
+                
+                console.log("Step 6: Attempting to send email to", data.email);
+                console.log("Full applicant object being passed to EmailJS:", applicantObj);
+                
+                const result = await sendConfirmationEmail(applicantObj, trackToUse);
+                console.log("Step 7: EmailJS response =", result);
 
                 // Mark as sent in Firebase
                 await updateDoc(pendingRef, { email_sent: true });
-                console.log("Confirmation email sent and tracked via Firebase");
+                console.log("Step 8: Email sent successfully and tracked via Firebase");
               } else {
-                console.log("Email already marked as sent in Firebase");
+                console.log("Email already marked as sent in Firebase, skipping Step 6-8");
               }
             } else {
+              console.log("Step 4: Pending payment found =", false);
               // Fallback to localStorage if Firebase record missing but we have local data
               if (parsedApplicant) {
+                console.log("Falling back to localStorage data for email sending");
                 const track = isBuilders ? 'builders' : 'sprint';
-                await sendConfirmationEmail(parsedApplicant, track);
+                console.log("Step 6 (Fallback): Attempting to send email to", parsedApplicant.email);
+                const result = await sendConfirmationEmail(parsedApplicant, track);
+                console.log("Step 7: EmailJS response =", result);
+                console.log("Step 8: Email sent successfully (Fallback)");
+              } else {
+                console.log("No data available to send email (Step 6 skipped)");
               }
             }
           } else if (parsedApplicant) {
             // Fallback for cases where email might not be extracted but object exists
+            console.log("No email string found but parsedApplicant exists. Falling back.");
             const track = isBuilders ? 'builders' : 'sprint';
-            await sendConfirmationEmail(parsedApplicant, track);
+            console.log("Step 6 (No-Email-Fallback): Attempting to send email to", parsedApplicant.email);
+            const result = await sendConfirmationEmail(parsedApplicant, track);
+            console.log("Step 7: EmailJS response =", result);
+            console.log("Step 8: Email sent successfully (No-Email-Fallback)");
+          } else {
+            console.log("Step 3: No email found in localStorage, cannot check Firebase or proceed with Step 6.");
           }
         } catch (err) {
-          console.error("email sending error on success page:", err);
+          console.error("Step 8: Email failed =", err);
           setEmailFailed(true);
         }
+      } else {
+        console.log("Skipping email logic because:", { isBuilders, isSprint, emailSentAlready: emailSentRef.current });
       }
     };
 
