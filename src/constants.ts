@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export const PAYSTACK_LINK_SPRINT = "https://paystack.shop/pay/sprintexecution";
+export const PAYSTACK_LINK_SPRINT = "https://paystack.shop/pay/sprint-group-access";
 export const PAYSTACK_LINK_BUILDERS = "https://paystack.shop/pay/sprint-builders-track";
 export const SELAR_LINK = "https://selar.co/sprint-execution";
 export const WHATSAPP_NUMBER = "2348120723575";
